@@ -14,16 +14,6 @@ import {
   RefreshCw,
   CheckCircle,
   Camera,
-  Truck,
-  DollarSign,
-  Percent,
-  Globe,
-  Clock,
-  Mail,
-  Phone,
-  MapPin,
-  CreditCard,
-  LogOut,
 } from "lucide-react";
 
 interface SettingSection {
@@ -892,7 +882,7 @@ const Settings = () => {
         {/* Settings Layout */}
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Sidebar */}
-          <div className="lg:w-64 flex-shrink-0">
+          <div className="lg:w-64 shrink-0">
             <div className="border border-gray-200">
               {sections.map((section) => (
                 <button

@@ -1,10 +1,8 @@
 // pages/Analytics.tsx
-import { useState, useMemo } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useState } from "react";
+import { motion } from "framer-motion";
 import DashboardLayout from "../layout/DashboardLayout";
 import {
-  TrendingUp,
-  TrendingDown,
   DollarSign,
   ShoppingBag,
   Users,
@@ -12,21 +10,13 @@ import {
   Eye,
   Star,
   Clock,
-  Calendar,
   Download,
-  Filter,
-  ChevronLeft,
-  ChevronRight,
   ArrowUpRight,
   ArrowDownRight,
-  BarChart3,
-  LineChart,
-  PieChart,
   Activity,
   Target,
   Award,
   Zap,
-  AlertCircle,
 } from "lucide-react";
 
 interface MetricCard {
@@ -268,7 +258,7 @@ const Analytics = () => {
   // Calculate totals
   const totalRevenue = salesData.reduce((sum, d) => sum + d.revenue, 0);
   const totalOrders = salesData.reduce((sum, d) => sum + d.orders, 0);
-  const totalVisitors = salesData.reduce((sum, d) => sum + d.visitors, 0);
+  //   const totalVisitors = salesData.reduce((sum, d) => sum + d.visitors, 0);
   const averageOrderValue = totalRevenue / totalOrders;
 
   return (

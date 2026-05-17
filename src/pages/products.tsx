@@ -6,7 +6,6 @@ import {
   Plus,
   Search,
   Trash2,
-  Eye,
   Copy,
   X,
   ChevronLeft,

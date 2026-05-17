@@ -3,30 +3,14 @@ import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import DashboardLayout from "../layout/DashboardLayout";
 import {
-  Package,
   Search,
-  Filter,
   Plus,
   Edit,
-  Trash2,
-  Eye,
-  AlertTriangle,
-  CheckCircle,
-  Clock,
-  TrendingUp,
-  TrendingDown,
   ChevronLeft,
   ChevronRight,
   X,
-  Save,
   RefreshCw,
   Download,
-  Upload,
-  Archive,
-  Tag,
-  Layers,
-  DollarSign,
-  Percent,
 } from "lucide-react";
 
 interface InventoryItem {
@@ -249,7 +233,7 @@ const Inventory = () => {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [locationFilter, setLocationFilter] = useState<string>("all");
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
-  const [showEditModal, setShowEditModal] = useState(false);
+  //   const [showEditModal, setShowEditModal] = useState(false);
   const [showAdjustModal, setShowAdjustModal] = useState(false);
   const [adjustQuantity, setAdjustQuantity] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
@@ -280,8 +264,8 @@ const Inventory = () => {
 
     // Sort
     filtered.sort((a, b) => {
-      let aVal = a[sortField];
-      let bVal = b[sortField];
+      let aVal: any = a[sortField];
+      let bVal: any = b[sortField];
 
       if (typeof aVal === "number") {
         if (aVal < bVal) return sortDirection === "asc" ? -1 : 1;

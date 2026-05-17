@@ -10,7 +10,6 @@ import {
   LogOut,
   ClipboardList,
   Tags,
-  MessageSquare,
   X,
 } from "lucide-react";
 

@@ -7,25 +7,17 @@ import {
   Mail,
   Phone,
   MapPin,
-  Calendar,
   DollarSign,
   ShoppingBag,
   Star,
-  ThumbsUp,
-  ThumbsDown,
-  MessageCircle,
-  MoreVertical,
   ChevronLeft,
   ChevronRight,
   Eye,
   X,
-  Download,
-  Filter,
   TrendingUp,
   Users,
   UserPlus,
   UserCheck,
-  Activity,
 } from "lucide-react";
 
 interface Customer {
@@ -214,7 +206,7 @@ const sampleCustomers: Customer[] = [
 ];
 
 const Customers = () => {
-  const [customers, setCustomers] = useState<Customer[]>(sampleCustomers);
+  const [customers] = useState<Customer[]>(sampleCustomers);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(
@@ -328,7 +320,7 @@ const Customers = () => {
   const activeCustomers = customers.filter((c) => c.status === "active").length;
   const vipCustomers = customers.filter((c) => c.status === "vip").length;
   const totalRevenue = customers.reduce((sum, c) => sum + c.totalSpent, 0);
-  const averageCustomerValue = totalRevenue / totalCustomers;
+  //   const averageCustomerValue = totalRevenue / totalCustomers;
   const averageOrderValue =
     customers.reduce((sum, c) => sum + c.averageOrderValue, 0) / totalCustomers;
 
