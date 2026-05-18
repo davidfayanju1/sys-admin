@@ -43,14 +43,14 @@ const Settings = () => {
 
   // Store Settings
   const [store, setStore] = useState({
-    storeName: "TERYIMA FASHION HOUSE",
-    storeEmail: "hello@teryima.com",
+    storeName: "SYS_EMPIRE",
+    storeEmail: "sysempire.com",
     storePhone: "+44 7911 123456",
     address: "123 Fashion Avenue",
     city: "London",
     postalCode: "WC1A 1AB",
-    country: "United Kingdom",
-    currency: "GBP",
+    country: "Nigeria",
+    currency: "NGN",
     taxRate: 20,
     shippingFee: 5.99,
     freeShippingThreshold: 50,
