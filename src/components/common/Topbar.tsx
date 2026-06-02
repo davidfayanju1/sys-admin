@@ -2,9 +2,14 @@
 import { Search, User, Heart, ShoppingBag, Menu } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { useAuthStore } from "../../store/authStore";
 
 const Topbar = () => {
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
+
+  const { user } = useAuthStore();
+
+  console.log(user, "Current user");
 
   const toggleSidebar = () => {
     const event = new CustomEvent("toggleSidebar");
