@@ -10,98 +10,24 @@ import {
   XCircle,
   Search,
   Download,
-  Printer,
-  ChevronLeft,
-  ChevronRight,
+  ShoppingBag,
 } from "lucide-react";
+import DataTableComponent, {
+  type TableColumn,
+} from "react-data-table-component";
+const DataTable = (DataTableComponent as any).default || DataTableComponent;
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+import { useOrders, useOrderSummary, type Order } from "../hooks/useOrders";
+import OrderDetailsModal from "../components/orders/OrderDetailsModal";
+import Skeleton from "../components/UI/Skeleton";
+import StatCard from "../components/UI/StatCard";
 
-interface Order {
-  id: string;
-  customer: string;
-  date: string;
-  amount: number;
-  status: "pending" | "processing" | "shipped" | "delivered" | "cancelled";
-  paymentStatus: "paid" | "pending" | "failed";
-  items: number;
-}
-
-const ordersData: Order[] = [
-  {
-    id: "ORD-001",
-    customer: "Sarah Johnson",
-    date: "2024-05-15",
-    amount: 245.0,
-    status: "delivered",
-    paymentStatus: "paid",
-    items: 3,
-  },
-  {
-    id: "ORD-002",
-    customer: "Michael Chen",
-    date: "2024-05-14",
-    amount: 432.0,
-    status: "shipped",
-    paymentStatus: "paid",
-    items: 2,
-  },
-  {
-    id: "ORD-003",
-    customer: "Emma Wilson",
-    date: "2024-05-14",
-    amount: 178.0,
-    status: "processing",
-    paymentStatus: "pending",
-    items: 1,
-  },
-  {
-    id: "ORD-004",
-    customer: "James Brown",
-    date: "2024-05-13",
-    amount: 567.0,
-    status: "pending",
-    paymentStatus: "pending",
-    items: 4,
-  },
-  {
-    id: "ORD-005",
-    customer: "Olivia Martinez",
-    date: "2024-05-13",
-    amount: 89.0,
-    status: "delivered",
-    paymentStatus: "paid",
-    items: 1,
-  },
-  {
-    id: "ORD-006",
-    customer: "William Taylor",
-    date: "2024-05-12",
-    amount: 324.0,
-    status: "pending",
-    paymentStatus: "failed",
-    items: 2,
-  },
-  {
-    id: "ORD-007",
-    customer: "Sophia Lee",
-    date: "2024-05-11",
-    amount: 129.0,
-    status: "shipped",
-    paymentStatus: "paid",
-    items: 1,
-  },
-  {
-    id: "ORD-008",
-    customer: "Daniel Kim",
-    date: "2024-05-10",
-    amount: 890.0,
-    status: "processing",
-    paymentStatus: "paid",
-    items: 5,
-  },
-];
-
-const StatusBadge = ({ status }: { status: Order["status"] }) => {
-  const config = {
+const StatusBadge = ({ status }: { status: string }) => {
+  const config: Record<
+    string,
+    { icon: any; label: string; className: string }
+  > = {
     pending: {
       icon: Clock,
       label: "Pending",
@@ -128,10 +54,17 @@ const StatusBadge = ({ status }: { status: Order["status"] }) => {
       className: "bg-red-100 text-red-700",
     },
   };
-  const { icon: Icon, label, className } = config[status];
+
+  const statusConfig = config[status.toLowerCase()] || {
+    icon: Clock,
+    label: status,
+    className: "bg-gray-100 text-gray-700",
+  };
+
+  const { icon: Icon, label, className } = statusConfig;
   return (
     <span
-      className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-medium ${className}`}
+      className={`inline-flex items-center gap-1 px-2 py-1 text-[9px] uppercase tracking-wide font-medium ${className}`}
     >
       <Icon className="w-3 h-3" />
       {label}
@@ -139,293 +72,411 @@ const StatusBadge = ({ status }: { status: Order["status"] }) => {
   );
 };
 
-const PaymentBadge = ({ status }: { status: Order["paymentStatus"] }) => {
-  const config = {
+const PaymentBadge = ({ status }: { status: string }) => {
+  const config: Record<string, string> = {
     paid: "bg-green-100 text-green-700",
     pending: "bg-yellow-100 text-yellow-700",
     failed: "bg-red-100 text-red-700",
   };
+
+  const className = config[status.toLowerCase()] || "bg-gray-100 text-gray-700";
+
   return (
     <span
-      className={`inline-flex px-2 py-1 text-xs font-medium ${config[status]}`}
+      className={`inline-flex px-2 py-1 text-[9px] uppercase tracking-wide font-medium ${className}`}
     >
-      {status.charAt(0).toUpperCase() + status.slice(1)}
+      {status}
     </span>
   );
 };
 
+// Custom styles for DataTable
+const customStyles = {
+  table: {
+    style: {
+      backgroundColor: "transparent",
+      borderRadius: "0px",
+    },
+  },
+  headRow: {
+    style: {
+      backgroundColor: "rgba(0, 0, 0, 0.03)",
+      borderBottom: "1px solid rgba(0, 0, 0, 0.06)",
+      minHeight: "42px",
+      borderRadius: "0px",
+    },
+  },
+  headCells: {
+    style: {
+      fontSize: "9px",
+      fontWeight: "300",
+      letterSpacing: "0.1em",
+      textTransform: "uppercase" as const,
+      color: "rgba(0, 0, 0, 0.5)",
+      paddingLeft: "16px",
+      paddingRight: "16px",
+    },
+  },
+  rows: {
+    style: {
+      minHeight: "48px",
+      borderBottom: "1px solid rgba(0, 0, 0, 0.04)",
+      "&:hover": {
+        backgroundColor: "rgba(0, 0, 0, 0.02)",
+      },
+      transition: "background-color 0.15s ease",
+    },
+  },
+  cells: {
+    style: {
+      paddingLeft: "16px",
+      paddingRight: "16px",
+    },
+  },
+  pagination: {
+    style: {
+      fontSize: "11px",
+      fontWeight: "300",
+      color: "rgba(0, 0, 0, 0.5)",
+      borderTop: "1px solid rgba(0, 0, 0, 0.06)",
+      minHeight: "48px",
+    },
+    pageButtonsStyle: {
+      borderRadius: "0px",
+      height: "32px",
+      width: "32px",
+      padding: "4px",
+      cursor: "pointer",
+      transition: "0.2s",
+      fill: "rgba(0, 0, 0, 0.4)",
+      "&:hover:not(:disabled)": {
+        backgroundColor: "rgba(0, 0, 0, 0.04)",
+        fill: "rgba(0, 0, 0, 0.8)",
+      },
+      "&:disabled": {
+        cursor: "default",
+        fill: "rgba(0, 0, 0, 0.15)",
+      },
+    },
+  },
+  noData: {
+    style: {
+      padding: "32px",
+      color: "rgba(0, 0, 0, 0.4)",
+      fontSize: "12px",
+      fontWeight: "300",
+    },
+  },
+};
+
+const TableSkeleton = () => (
+  <div className="p-5 space-y-4">
+    <div className="flex items-center gap-6 pb-3 border-b border-black/5">
+      <Skeleton className="w-16 h-3 rounded-sm" />
+      <Skeleton className="flex-1 h-3 rounded-sm max-w-[100px]" />
+      <Skeleton className="w-8 h-3 rounded-sm" />
+      <Skeleton className="w-14 h-3 rounded-sm" />
+      <Skeleton className="w-16 h-3 rounded-sm" />
+      <Skeleton className="w-16 h-3 rounded-sm" />
+    </div>
+    {Array.from({ length: 5 }).map((_, i) => (
+      <div key={i} className="flex items-center gap-6">
+        <Skeleton className="w-16 h-4 rounded-sm" />
+        <Skeleton className="flex-1 h-4 rounded-sm max-w-[120px]" />
+        <Skeleton className="w-8 h-4 rounded-sm" />
+        <Skeleton className="w-16 h-4 rounded-sm" />
+        <Skeleton className="w-20 h-4 rounded-sm" />
+        <Skeleton className="w-20 h-5 rounded-sm" />
+      </div>
+    ))}
+  </div>
+);
+
 const Orders = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [searchInput, setSearchInput] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [rowsPerPage] = useState(10);
-  const [sortField, setSortField] = useState<keyof Order>("id");
-  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+  const [rowsPerPage, setRowsPerPage] = useState(20);
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
 
-  const filteredData = useMemo(() => {
-    return ordersData.filter(
-      (item) =>
-        item.customer.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.id.toLowerCase().includes(searchTerm.toLowerCase()),
-    );
-  }, [searchTerm]);
+  // Fetch orders from API
+  const { data: ordersResponse, isLoading: ordersLoading } = useOrders(
+    currentPage,
+    rowsPerPage,
+    searchTerm,
+  );
+  const orders = ordersResponse?.data || [];
+  const meta = ordersResponse?.meta || { total: 0 };
 
-  const sortedData = useMemo(() => {
-    const sorted = [...filteredData];
-    sorted.sort((a, b) => {
-      const aVal = a[sortField];
-      const bVal = b[sortField];
-      if (aVal < bVal) return sortDirection === "asc" ? -1 : 1;
-      if (aVal > bVal) return sortDirection === "asc" ? 1 : -1;
-      return 0;
-    });
-    return sorted;
-  }, [filteredData, sortField, sortDirection]);
-
-  const paginatedData = useMemo(() => {
-    const start = (currentPage - 1) * rowsPerPage;
-    return sortedData.slice(start, start + rowsPerPage);
-  }, [sortedData, currentPage, rowsPerPage]);
-
-  const totalPages = Math.ceil(sortedData.length / rowsPerPage);
-
-  const handleSort = (field: keyof Order) => {
-    if (sortField === field) {
-      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
-    } else {
-      setSortField(field);
-      setSortDirection("asc");
-    }
+  // Fetch summary stats
+  const { data: summaryResponse, isLoading: summaryLoading } =
+    useOrderSummary();
+  const summary = summaryResponse?.data || {
+    total: 0,
+    pending: 0,
+    processing: 0,
+    shipped: 0,
+    delivered: 0,
+    cancelled: 0,
+    paid: 0,
   };
 
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    setSearchTerm(searchInput);
+    setCurrentPage(1);
+  };
+
+  const columns: TableColumn<Order>[] = useMemo(
+    () => [
+      {
+        name: "Order ID",
+        selector: (row) => row.id,
+        sortable: true,
+        cell: (row) => (
+          <span className="text-xs text-black/70 font-light">{row.id}</span>
+        ),
+        width: "150px",
+      },
+      {
+        name: "Customer",
+        selector: (row) => row.customer,
+        sortable: true,
+        cell: (row) => (
+          <span className="text-xs text-black/70 font-light">
+            {row.customer}
+          </span>
+        ),
+      },
+      {
+        name: "Date",
+        selector: (row) => row.date,
+        sortable: true,
+        cell: (row) => (
+          <span className="text-xs text-black/50 font-light">
+            {new Date(row.date).toLocaleDateString()}
+          </span>
+        ),
+      },
+      {
+        name: "Items",
+        selector: (row) => row.items,
+        sortable: true,
+        center: true,
+        cell: (row) => (
+          <span className="text-xs text-black/50 font-light">{row.items}</span>
+        ),
+        width: "80px",
+      },
+      {
+        name: "Amount",
+        selector: (row) => row.amount,
+        sortable: true,
+        right: true,
+        cell: (row) => (
+          <span className="text-xs font-medium text-black">
+            ₦
+            {Number(row.amount).toLocaleString(undefined, {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}
+          </span>
+        ),
+      },
+      {
+        name: "Status",
+        selector: (row) => row.status,
+        sortable: true,
+        cell: (row) => <StatusBadge status={row.status} />,
+      },
+      {
+        name: "Payment",
+        selector: (row) => row.paymentStatus,
+        sortable: true,
+        cell: (row) => <PaymentBadge status={row.paymentStatus} />,
+      },
+      {
+        name: "Actions",
+        center: true,
+        cell: (row) => (
+          <button
+            onClick={() => setSelectedOrderId(row._id)}
+            className="p-1.5 hover:bg-black/5 transition-colors text-black/60 hover:text-black"
+            title="View Details"
+          >
+            <Eye className="w-4 h-4" />
+          </button>
+        ),
+        width: "80px",
+      },
+    ],
+    [],
+  );
+
   const handleExport = () => {
+    if (!orders.length) return;
+
+    const doc = new jsPDF();
+
     const headers = [
       "Order ID",
       "Customer",
       "Date",
       "Items",
-      "Amount",
+      "Amount (Naira)",
       "Status",
       "Payment",
     ];
-    const rows = filteredData.map((order) => [
+
+    const rows = orders.map((order) => [
       order.id,
       order.customer,
-      order.date,
+      new Date(order.date).toLocaleDateString(),
       order.items,
-      `₦${order.amount}`,
+      Number(order.amount).toLocaleString(undefined, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }),
       order.status,
       order.paymentStatus,
     ]);
-    const csv = [headers, ...rows].map((row) => row.join(",")).join("\n");
-    const blob = new Blob([csv], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `orders_${new Date().toISOString()}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
 
-  const getSortIcon = (field: keyof Order) => {
-    if (sortField !== field) return "↕️";
-    return sortDirection === "asc" ? "↑" : "↓";
+    doc.setFontSize(16);
+    doc.text("Orders Report", 14, 15);
+    doc.setFontSize(10);
+    doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 22);
+
+    autoTable(doc, {
+      startY: 28,
+      head: [headers],
+      body: rows,
+      theme: "grid",
+      styles: { fontSize: 8, cellPadding: 3 },
+      headStyles: { fillColor: [20, 20, 20], textColor: [255, 255, 255] },
+      alternateRowStyles: { fillColor: [250, 250, 250] },
+    });
+
+    doc.save(`orders_export_${new Date().getTime()}.pdf`);
   };
 
   return (
     <DashboardLayout>
-      <div className="space-y-4">
+      <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-light tracking-tight">Orders</h1>
+            <h1 className="text-2xl font-light tracking-tight text-black">
+              Orders
+            </h1>
             <div className="w-12 h-px bg-black/10 mt-2" />
-            <p className="text-xs text-gray-500 mt-3">
+            <p className="text-xs text-black/50 mt-3">
               Manage and track all customer orders
             </p>
           </div>
           <div className="flex gap-3">
             <button
               onClick={handleExport}
-              className="flex items-center gap-2 px-4 py-2 border border-gray-200 hover:border-black transition text-sm"
+              className="flex items-center gap-2 px-4 py-2 border border-black/10 hover:border-black transition text-sm text-black/70 hover:text-black"
             >
               <Download className="w-4 h-4" />
-              Export
-            </button>
-            <button className="flex items-center gap-2 px-4 py-2 bg-black text-white hover:bg-black/90 transition text-sm">
-              <Printer className="w-4 h-4" />
-              Print
+              <span className="font-light">Export</span>
             </button>
           </div>
         </div>
 
-        {/* Stats Summary - NO rounded corners */}
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-          <div className="bg-white border border-gray-200 p-3">
-            <p className="text-xs text-gray-500">Total Orders</p>
-            <p className="text-xl font-semibold">{ordersData.length}</p>
-          </div>
-          <div className="bg-white border border-gray-200 p-3">
-            <p className="text-xs text-gray-500">Pending</p>
-            <p className="text-xl font-semibold text-yellow-600">
-              {ordersData.filter((o) => o.status === "pending").length}
-            </p>
-          </div>
-          <div className="bg-white border border-gray-200 p-3">
-            <p className="text-xs text-gray-500">Shipped</p>
-            <p className="text-xl font-semibold text-purple-600">
-              {ordersData.filter((o) => o.status === "shipped").length}
-            </p>
-          </div>
-          <div className="bg-white border border-gray-200 p-3">
-            <p className="text-xs text-gray-500">Delivered</p>
-            <p className="text-xl font-semibold text-green-600">
-              {ordersData.filter((o) => o.status === "delivered").length}
-            </p>
-          </div>
-          <div className="bg-white border border-gray-200 p-3">
-            <p className="text-xs text-gray-500">Revenue</p>
-            <p className="text-xl font-semibold">
-              ₦
-              {ordersData
-                .reduce((sum, o) => sum + o.amount, 0)
-                .toLocaleString()}
-            </p>
-          </div>
-        </div>
-
-        {/* Search Bar - NO rounded corners */}
-        <div className="relative max-w-xs">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search by customer or order ID..."
-            value={searchTerm}
-            onChange={(e) => {
-              setSearchTerm(e.target.value);
-              setCurrentPage(1);
-            }}
-            className="w-full pl-9 pr-4 py-2 border border-gray-200 focus:outline-none focus:border-black text-sm"
+        {/* Stats Summary */}
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+          <StatCard
+            icon={ShoppingBag}
+            label="Total Orders"
+            value={summary.total}
+            loading={summaryLoading}
+          />
+          <StatCard
+            icon={Clock}
+            label="Pending"
+            value={summary.pending}
+            delay={0.05}
+            loading={summaryLoading}
+          />
+          <StatCard
+            icon={Package}
+            label="Processing"
+            value={summary.processing}
+            delay={0.1}
+            loading={summaryLoading}
+          />
+          <StatCard
+            icon={Truck}
+            label="Shipped"
+            value={summary.shipped}
+            delay={0.15}
+            loading={summaryLoading}
+          />
+          <StatCard
+            icon={CheckCircle}
+            label="Delivered"
+            value={summary.delivered}
+            delay={0.2}
+            loading={summaryLoading}
           />
         </div>
 
-        {/* Table - NO rounded corners */}
-        <div className="bg-white border border-gray-200 overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
-                <tr>
-                  <th
-                    onClick={() => handleSort("id")}
-                    className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600 cursor-pointer hover:text-black"
-                  >
-                    Order ID {getSortIcon("id")}
-                  </th>
-                  <th
-                    onClick={() => handleSort("customer")}
-                    className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600 cursor-pointer hover:text-black"
-                  >
-                    Customer {getSortIcon("customer")}
-                  </th>
-                  <th
-                    onClick={() => handleSort("date")}
-                    className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600 cursor-pointer hover:text-black"
-                  >
-                    Date {getSortIcon("date")}
-                  </th>
-                  <th
-                    onClick={() => handleSort("items")}
-                    className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-gray-600 cursor-pointer hover:text-black"
-                  >
-                    Items {getSortIcon("items")}
-                  </th>
-                  <th
-                    onClick={() => handleSort("amount")}
-                    className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-600 cursor-pointer hover:text-black"
-                  >
-                    Amount {getSortIcon("amount")}
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">
-                    Status
-                  </th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">
-                    Payment
-                  </th>
-                  <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-gray-600">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {paginatedData.map((order) => (
-                  <tr
-                    key={order.id}
-                    className="hover:bg-gray-50 transition-colors"
-                  >
-                    <td className="px-4 py-3 text-sm font-medium text-gray-900">
-                      {order.id}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-600">
-                      {order.customer}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-gray-600">
-                      {order.date}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-center text-gray-600">
-                      {order.items}
-                    </td>
-                    <td className="px-4 py-3 text-sm text-right font-medium text-gray-900">
-                      ₦{order.amount.toFixed(2)}
-                    </td>
-                    <td className="px-4 py-3">
-                      <StatusBadge status={order.status} />
-                    </td>
-                    <td className="px-4 py-3">
-                      <PaymentBadge status={order.paymentStatus} />
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      <button className="p-1 hover:bg-gray-100 transition">
-                        <Eye className="w-4 h-4 text-gray-600" />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+        {/* Search Bar */}
+        <div className="flex justify-between items-center bg-white border border-black/10 p-4">
+          <form onSubmit={handleSearch} className="relative max-w-sm w-full">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-black/30" />
+            <input
+              type="text"
+              placeholder="Search by customer or order ID..."
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-black/10 focus:outline-none focus:border-black/30 transition-colors text-sm font-light bg-transparent"
+            />
+            <button type="submit" className="hidden" />
+          </form>
+        </div>
 
-          {/* Pagination - NO rounded corners */}
-          {sortedData.length > 0 && (
-            <div className="px-4 py-3 border-t border-gray-200 flex items-center justify-between">
-              <div className="text-sm text-gray-500">
-                Showing {(currentPage - 1) * rowsPerPage + 1} to{" "}
-                {Math.min(currentPage * rowsPerPage, sortedData.length)} of{" "}
-                {sortedData.length} orders
-              </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
-                  className="p-2 border border-gray-200 disabled:opacity-50 disabled:cursor-not-allowed hover:border-black transition"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </button>
-                <span className="px-4 py-2 text-sm">
-                  Page {currentPage} of {totalPages}
-                </span>
-                <button
-                  onClick={() =>
-                    setCurrentPage((p) => Math.min(totalPages, p + 1))
-                  }
-                  disabled={currentPage === totalPages}
-                  className="p-2 border border-gray-200 disabled:opacity-50 disabled:cursor-not-allowed hover:border-black transition"
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
+        {/* Data Table */}
+        <div className="bg-white border border-black/10">
+          {ordersLoading ? (
+            <TableSkeleton />
+          ) : (
+            <DataTable
+              columns={columns}
+              data={orders}
+              customStyles={customStyles}
+              pagination
+              paginationServer
+              paginationTotalRows={meta.total}
+              onChangePage={(page: number) => setCurrentPage(page)}
+              onChangeRowsPerPage={(newPerPage: number, page: number) => {
+                setRowsPerPage(newPerPage);
+                setCurrentPage(page);
+              }}
+              paginationPerPage={rowsPerPage}
+              paginationRowsPerPageOptions={[10, 20, 50]}
+              highlightOnHover
+              responsive
+              persistTableHead
+              noDataComponent={
+                <div className="py-12 text-center">
+                  <p className="text-xs text-black/40 tracking-wide">
+                    No orders found matching your criteria.
+                  </p>
+                </div>
+              }
+            />
           )}
         </div>
       </div>
+
+      {selectedOrderId && (
+        <OrderDetailsModal
+          orderId={selectedOrderId}
+          onClose={() => setSelectedOrderId(null)}
+        />
+      )}
     </DashboardLayout>
   );
 };
