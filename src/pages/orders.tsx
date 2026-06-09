@@ -376,10 +376,10 @@ const Orders = () => {
           <div className="flex gap-3">
             <button
               onClick={handleExport}
-              className="flex items-center gap-2 px-4 py-2 border border-black/10 hover:border-black transition text-sm text-black/70 hover:text-black"
+              className="flex items-center gap-2 px-4 py-2 bg-black border border-black/10 hover:border-black transition text-sm text-black/70 hover:text-black"
             >
-              <Download className="w-4 h-4" />
-              <span className="font-light">Export</span>
+              <Download className="w-4 h-4" color="white" />
+              <span className="font-light text-white">Export</span>
             </button>
           </div>
         </div>
