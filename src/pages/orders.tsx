@@ -212,7 +212,7 @@ const Orders = () => {
       order.customer,
       order.date,
       order.items,
-      `$${order.amount}`,
+      `₦${order.amount}`,
       order.status,
       order.paymentStatus,
     ]);
@@ -285,7 +285,7 @@ const Orders = () => {
           <div className="bg-white border border-gray-200 p-3">
             <p className="text-xs text-gray-500">Revenue</p>
             <p className="text-xl font-semibold">
-              $
+              ₦
               {ordersData
                 .reduce((sum, o) => sum + o.amount, 0)
                 .toLocaleString()}
@@ -374,7 +374,7 @@ const Orders = () => {
                       {order.items}
                     </td>
                     <td className="px-4 py-3 text-sm text-right font-medium text-gray-900">
-                      ${order.amount.toFixed(2)}
+                      ₦{order.amount.toFixed(2)}
                     </td>
                     <td className="px-4 py-3">
                       <StatusBadge status={order.status} />
