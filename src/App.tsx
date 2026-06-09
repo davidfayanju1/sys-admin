@@ -15,10 +15,12 @@ import { queryClient } from "./lib/query-client";
 import NotFound from "./pages/not-found";
 import ProtectedRoute from "./components/auth-guard/ProtectedRoute";
 import PublicRoute from "./components/auth-guard/PublicRoute";
+import ScrollToTop from "./components/common/ScrollToTop";
 
 function App() {
   return (
     <>
+      <ScrollToTop />
       <QueryClientProvider client={queryClient}>
         <Toaster
           theme="dark"
