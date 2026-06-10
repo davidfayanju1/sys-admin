@@ -149,11 +149,7 @@ const Sidebar = () => {
     <>
       {/* Logo */}
       <div className="h-[80px] px-2 flex items-center border-b border-black/10">
-        <Link
-          to="/dashboard"
-          className="block"
-          onClick={() => setIsOpen(false)}
-        >
+        <Link to="/home" className="block" onClick={() => setIsOpen(false)}>
           <div className="flex items-center gap-2">
             <div>
               <img

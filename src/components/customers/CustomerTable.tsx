@@ -77,13 +77,15 @@ const CustomerTable = ({
     }).format(amount);
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-GB", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    });
-  };
+  //   const formatDate = (dateString: string) => {
+  //     return new Date(dateString).toLocaleDateString("en-GB", {
+  //       day: "2-digit",
+  //       month: "short",
+  //       year: "numeric",
+  //     });
+  //   };
+
+  console.log(customers, "Customers");
 
   const getStatusBadge = (status: Customer["status"]) => {
     switch (status) {
@@ -143,7 +145,6 @@ const CustomerTable = ({
           <div>
             <p className="text-sm font-medium text-gray-900">{row.name}</p>
             <p className="text-[11px] text-gray-500">{row.email}</p>
-            <p className="text-[10px] text-gray-400">{row.phone}</p>
           </div>
         </div>
       ),
@@ -161,11 +162,11 @@ const CustomerTable = ({
       ),
     },
     {
-      name: "Orders",
+      name: "Total Orders",
       selector: (row: Customer) => row.totalOrders,
       sortable: true,
       center: true,
-      width: "100px",
+      width: "150px",
       cell: (row: Customer) => (
         <div className="flex items-center gap-1 justify-center">
           <ShoppingBag className="w-3 h-3 text-gray-400" />
@@ -193,19 +194,17 @@ const CustomerTable = ({
       cell: (row: Customer) => (
         <div className="flex items-center gap-1">
           <MapPin className="w-3 h-3 text-gray-400" />
-          <span className="text-xs text-gray-600">{row.city}</span>
+          <span className="text-xs text-gray-600">{row.city || "N/A"}</span>
         </div>
       ),
     },
     {
-      name: "Last Order",
-      selector: (row: Customer) => row.lastOrderDate,
+      name: "Join Date",
+      selector: (row: Customer) => row.joinDate,
       sortable: true,
       width: "110px",
       cell: (row: Customer) => (
-        <span className="text-xs text-gray-600">
-          {formatDate(row.lastOrderDate)}
-        </span>
+        <span className="text-xs text-gray-600">{row.joinDate}</span>
       ),
     },
     {

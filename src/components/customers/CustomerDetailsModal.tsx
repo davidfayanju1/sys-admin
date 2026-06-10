@@ -21,8 +21,10 @@ import {
   UserCheck,
   Clock,
   CreditCard,
+  Send,
 } from "lucide-react";
 import type { Customer, OrderSummary } from "../../types/customer";
+import { toast } from "sonner";
 
 const DataTable = (DataTableComponent as any).default || DataTableComponent;
 
@@ -38,9 +40,11 @@ const CustomerDetailsModal = ({
   onClose,
 }: CustomerDetailsModalProps) => {
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("en-GB", {
+    return new Intl.NumberFormat("en-NG", {
       style: "currency",
-      currency: "GBP",
+      currency: "NGN",
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
     }).format(amount);
   };
 
@@ -96,6 +100,50 @@ const CustomerDetailsModal = ({
         {status || "Pending"}
       </span>
     );
+  };
+
+  const handleSendEmail = () => {
+    if (!customer?.email) {
+      toast.error("No email address available for this customer");
+      return;
+    }
+
+    // Generic email message template
+    const subject = `Thank you for being a valued customer at SysEmpire`;
+    const body = `Dear ${customer.name},
+
+Thank you for being a valued customer at SysEmpire Fashion.
+
+We truly appreciate your loyalty and trust in our brand. As one of our ${
+      customer.status === "vip" ? "esteemed VIP members" : "valued customers"
+    }, we wanted to reach out and personally thank you for your continued support.
+
+Since joining us on ${formatDate(customer.joinDate)}, you've placed ${
+      customer.totalOrders
+    } order${customer.totalOrders !== 1 ? "s" : ""} with us, totaling ${formatCurrency(
+      customer.totalSpent,
+    )}. We're honored to be your choice for fashion.
+
+We'd love to hear your feedback on how we can serve you better. Feel free to reply to this email with any suggestions or requests.
+
+As a token of our appreciation, use code: WELCOME10 for 10% off your next order!
+
+Thank you once again for choosing SysEmpire.
+
+Warm regards,
+The SysEmpire Team
+`;
+
+    // Create mailto link
+    const mailtoLink = `mailto:${customer.email}?subject=${encodeURIComponent(
+      subject,
+    )}&body=${encodeURIComponent(body)}`;
+
+    // Open default email client
+    window.location.href = mailtoLink;
+
+    // Show success toast
+    toast.success(`Opening email client for ${customer.email}`);
   };
 
   // Orders table columns for react-data-table-component
@@ -479,7 +527,11 @@ const CustomerDetailsModal = ({
 
                 {/* Modal Footer */}
                 <div className="p-5 border-t border-gray-200 flex justify-end gap-3 sticky bottom-0 bg-white z-10">
-                  <button className="px-4 py-2 border border-gray-200 text-gray-700 text-sm hover:border-black transition">
+                  <button
+                    onClick={handleSendEmail}
+                    className="inline-flex items-center gap-2 px-4 py-2 border border-gray-200 text-gray-700 text-sm hover:border-black hover:bg-gray-50 transition"
+                  >
+                    <Send className="w-4 h-4" />
                     Send Email
                   </button>
                   <button

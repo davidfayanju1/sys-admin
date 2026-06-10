@@ -1,54 +1,61 @@
-// components/customers/CustomerStats.tsx
-import { Users, UserCheck, Star, DollarSign, TrendingUp } from "lucide-react";
-import type { CustomerSummary } from "../../types/customer";
+// components/inventory/InventoryStats.tsx
+import {
+  Package,
+  Layers,
+  DollarSign,
+  AlertTriangle,
+  XCircle,
+} from "lucide-react";
+import type { InventorySummary } from "../../types/inventory";
 
-interface CustomerStatsProps {
-  summary: CustomerSummary | undefined;
+interface InventoryStatsProps {
+  summary: InventorySummary | undefined;
   isLoading?: boolean;
 }
 
-const CustomerStats = ({ summary, isLoading }: CustomerStatsProps) => {
+const InventoryStats = ({ summary, isLoading }: InventoryStatsProps) => {
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat("en-NG", {
+      style: "currency",
+      currency: "NGN",
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(amount / 100); // Assuming amount is in kobo/cents
+  };
+
   const stats = [
     {
-      label: "Total Customers",
-      value: summary?.total || 0,
-      icon: Users,
+      label: "Total SKUs",
+      value: summary?.totalSkus || 0,
+      icon: Package,
       color: "text-gray-600",
     },
     {
-      label: "Active",
-      value: summary?.active || 0,
-      icon: UserCheck,
-      color: "text-green-600",
+      label: "Total Units",
+      value: summary?.totalUnits || 0,
+      icon: Layers,
+      color: "text-gray-600",
     },
     {
-      label: "VIP Members",
-      value: summary?.vip || 0,
-      icon: Star,
-      color: "text-amber-600",
-    },
-    {
-      label: "Total Revenue",
-      value: summary?.totalRevenue || 0,
+      label: "Stock Value",
+      value: summary?.stockValue || 0,
       icon: DollarSign,
       color: "text-gray-600",
       isCurrency: true,
     },
     {
-      label: "Avg. Order Value",
-      value: summary?.avgOrderValue || 0,
-      icon: TrendingUp,
-      color: "text-gray-600",
-      isCurrency: true,
+      label: "Low Stock",
+      value: summary?.lowStock || 0,
+      icon: AlertTriangle,
+      color: "text-yellow-600",
+    },
+    {
+      label: "Out of Stock",
+      value: summary?.outOfStock || 0,
+      icon: XCircle,
+      color: "text-red-600",
     },
   ];
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("en-NG", {
-      style: "currency",
-      currency: "NGN",
-    }).format(amount);
-  };
 
   if (isLoading) {
     return (
@@ -93,4 +100,4 @@ const CustomerStats = ({ summary, isLoading }: CustomerStatsProps) => {
   );
 };
 
-export default CustomerStats;
+export default InventoryStats;
