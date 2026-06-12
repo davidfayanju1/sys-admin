@@ -16,6 +16,7 @@ import NotFound from "./pages/not-found";
 import ProtectedRoute from "./components/auth-guard/ProtectedRoute";
 import PublicRoute from "./components/auth-guard/PublicRoute";
 import ScrollToTop from "./components/common/ScrollToTop";
+import ForgotPassword from "./pages/auth/forgot-password";
 
 function App() {
   return (
@@ -59,6 +60,14 @@ function App() {
             element={
               <PublicRoute>
                 <Login />
+              </PublicRoute>
+            }
+          />
+          <Route
+            path="/forgot-password"
+            element={
+              <PublicRoute>
+                <ForgotPassword />
               </PublicRoute>
             }
           />

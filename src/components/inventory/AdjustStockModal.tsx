@@ -1,7 +1,7 @@
 // components/inventory/AdjustStockModal.tsx
 import { motion, AnimatePresence } from "framer-motion";
 import { X } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import type { InventoryItem } from "../../types/inventory";
 
 interface AdjustStockModalProps {
@@ -19,23 +19,47 @@ const AdjustStockModal = ({
   onClose,
   isLoading,
 }: AdjustStockModalProps) => {
-  const [delta, setDelta] = useState(0);
+  const [delta, setDelta] = useState<number | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  //   const formatCurrency = (amount: number) => {
-  //     return new Intl.NumberFormat("en-NG", {
-  //       style: "currency",
-  //       currency: "NGN",
-  //       minimumFractionDigits: 2,
-  //       maximumFractionDigits: 2,
-  //     }).format(amount / 100);
-  //   };
+  // Reset delta when modal opens or item changes
+  useEffect(() => {
+    if (isOpen) {
+      setDelta(null);
+      // Focus the input after modal opens
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 100);
+    }
+  }, [isOpen, item]);
 
-  const handleConfirm = () => {
-    if (delta !== 0) {
-      onConfirm(delta);
-      setDelta(0);
+  const handleDeltaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    if (value === "") {
+      setDelta(null);
+    } else {
+      const parsedValue = parseInt(value);
+      setDelta(isNaN(parsedValue) ? null : parsedValue);
     }
   };
+
+  // Prevent wheel from changing the input value
+  const handleWheel = (e: React.WheelEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    return false;
+  };
+
+  const handleConfirm = () => {
+    if (delta !== null && delta !== 0) {
+      onConfirm(delta);
+      setDelta(null);
+    }
+  };
+
+  const currentStock = item?.stock || 0;
+  const newStock =
+    delta !== null ? Math.max(0, currentStock + delta) : currentStock;
 
   return (
     <AnimatePresence>
@@ -60,6 +84,7 @@ const AdjustStockModal = ({
                 <X className="w-5 h-5" />
               </button>
             </div>
+
             <div className="p-5 space-y-4">
               <div>
                 <p className="text-sm text-gray-600">Product</p>
@@ -68,21 +93,25 @@ const AdjustStockModal = ({
                   {item.color} / {item.size} • SKU: {item.sku}
                 </p>
               </div>
+
               <div>
                 <label className="block text-xs text-gray-500 mb-1">
                   Current Stock
                 </label>
-                <p className="text-lg font-semibold">{item.stock} units</p>
+                <p className="text-lg font-semibold">{currentStock} units</p>
               </div>
+
               <div>
                 <label className="block text-xs text-gray-500 mb-1">
                   Adjustment (+/-)
                 </label>
                 <input
+                  ref={inputRef}
                   type="number"
-                  value={delta}
-                  onChange={(e) => setDelta(parseInt(e.target.value) || 0)}
-                  className="w-full px-3 py-2 border border-gray-200 focus:border-black outline-none text-sm"
+                  value={delta === null ? "" : delta}
+                  onChange={handleDeltaChange}
+                  onWheel={handleWheel}
+                  className="w-full px-3 py-2 border border-gray-200 focus:border-black outline-none text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                   placeholder="Enter quantity (use - for reduction)"
                   disabled={isLoading}
                 />
@@ -90,15 +119,17 @@ const AdjustStockModal = ({
                   Positive value adds stock, negative removes stock
                 </p>
               </div>
+
               <div className="pt-2">
                 <p className="text-sm text-gray-600">
                   New Stock After Adjustment:
                 </p>
                 <p className="text-xl font-semibold text-green-600">
-                  {Math.max(0, item.stock + delta)} units
+                  {newStock} units
                 </p>
               </div>
             </div>
+
             <div className="p-5 border-t border-gray-200 flex justify-end gap-3">
               <button
                 onClick={onClose}
@@ -110,7 +141,7 @@ const AdjustStockModal = ({
               <button
                 onClick={handleConfirm}
                 className="px-4 py-2 bg-black text-white text-sm hover:bg-black/90 transition disabled:opacity-50"
-                disabled={delta === 0 || isLoading}
+                disabled={delta === null || delta === 0 || isLoading}
               >
                 {isLoading ? "Adjusting..." : "Apply Adjustment"}
               </button>

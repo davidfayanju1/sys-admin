@@ -1,5 +1,5 @@
 // components/inventory/InventoryTable.tsx
-import { Edit, RefreshCw, Trash2 } from "lucide-react";
+import { RefreshCw, Trash2 } from "lucide-react";
 import DataTableComponent, {
   type TableColumn,
 } from "react-data-table-component";
@@ -28,7 +28,7 @@ const InventoryTable = ({
   onPageChange,
   onPerRowsChange,
   onAdjustStock,
-  onEdit,
+  // onEdit,
   onDelete,
   isLoading,
 }: InventoryTableProps) => {
@@ -207,13 +207,13 @@ const InventoryTable = ({
           >
             <RefreshCw className="w-4 h-4 text-gray-500" />
           </button>
-          <button
+          {/* <button
             onClick={() => onEdit(row)}
             className="p-1 hover:bg-gray-100 transition"
             title="Edit"
           >
             <Edit className="w-4 h-4 text-gray-500" />
-          </button>
+          </button> */}
           <button
             onClick={() => onDelete(row)}
             className="p-1 hover:bg-gray-100 transition"

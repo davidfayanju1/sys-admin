@@ -24,7 +24,7 @@ const Topbar = () => {
 
         {/* Right Icons */}
         <div className="flex ml-auto items-center gap-1 md:gap-3">
-          <Link to="/profile" className="ml-1">
+          <Link to="/settings" className="ml-1">
             <div className="flex items-center gap-2">
               <div className="hidden md:block text-right">
                 <p className="text-[10px] tracking-[0.1em] uppercase text-black/60 font-light">

@@ -1,11 +1,10 @@
 // pages/Settings.tsx
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import DashboardLayout from "../layout/DashboardLayout";
 import {
   User,
   Store,
-  Bell,
   Shield,
   Palette,
   Eye,
@@ -15,6 +14,12 @@ import {
   CheckCircle,
   Camera,
 } from "lucide-react";
+import {
+  useSettings,
+  useUpdateSettings,
+  useChangePassword,
+} from "../hooks/useSettings";
+import { toast } from "sonner";
 
 interface SettingSection {
   id: string;
@@ -23,67 +28,74 @@ interface SettingSection {
   description: string;
 }
 
+// Skeleton Components
+const SettingsSkeleton = () => (
+  <div className="flex flex-col lg:flex-row gap-6">
+    <div className="lg:w-64 shrink-0">
+      <div className="border border-gray-200">
+        {[1, 2, 3, 4, 5].map((i) => (
+          <div key={i} className="px-4 py-3 animate-pulse">
+            <div className="flex items-center gap-3">
+              <div className="w-4 h-4 bg-gray-200 rounded" />
+              <div className="flex-1">
+                <div className="h-4 bg-gray-200 rounded w-24 mb-1" />
+                <div className="h-2 bg-gray-200 rounded w-32" />
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+    <div className="flex-1 bg-white border border-gray-200 p-6">
+      <div className="space-y-6 animate-pulse">
+        <div className="h-8 bg-gray-200 rounded w-32" />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i}>
+              <div className="h-3 bg-gray-200 rounded w-20 mb-1" />
+              <div className="h-9 bg-gray-200 rounded" />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
 const Settings = () => {
   const [activeSection, setActiveSection] = useState("profile");
   const [isSaving, setIsSaving] = useState(false);
   const [showSaveSuccess, setShowSaveSuccess] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
+  // const [showPassword, setShowPassword] = useState(false);
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  // Profile Settings
-  const [profile, setProfile] = useState({
-    firstName: "Dele",
-    lastName: "Teryima",
-    email: "dele@teryima.com",
-    phone: "+44 7911 123456",
-    bio: "Fashion brand owner and creative director with 8+ years of experience in luxury fashion.",
-    timezone: "Europe/London",
-    language: "English",
-    avatar: "/images/avatar-placeholder.png",
-  });
-
-  // Store Settings
-  const [store, setStore] = useState({
-    storeName: "SYS_EMPIRE",
-    storeEmail: "sysempire.com",
-    storePhone: "+44 7911 123456",
-    address: "123 Fashion Avenue",
-    city: "London",
-    postalCode: "WC1A 1AB",
-    country: "Nigeria",
-    currency: "NGN",
-    taxRate: 20,
-    shippingFee: 5.99,
-    freeShippingThreshold: 50,
-    timezone: "Europe/London",
-  });
-
-  // Brand Settings
-  const [brand, setBrand] = useState({
-    logo: "/images/logo5.png",
-    primaryColor: "#000000",
-    secondaryColor: "#ffffff",
-    accentColor: "#c4a747",
-    fontHeading: "Times New Roman",
-    fontBody: "Inter",
-  });
-
-  // Notification Settings
-  const [notifications, setNotifications] = useState({
-    newOrders: true,
-    orderUpdates: true,
-    lowStock: true,
-    customerFeedback: false,
-    marketingEmails: false,
-    securityAlerts: true,
-  });
-
-  // Security Settings
+  // Form states
+  const [profile, setProfile] = useState<any>({});
+  const [store, setStore] = useState<any>({});
+  const [brand, setBrand] = useState<any>({});
+  const [notifications, setNotifications] = useState<any>({});
   const [security, setSecurity] = useState({
     currentPassword: "",
     newPassword: "",
     confirmPassword: "",
-    twoFactorEnabled: false,
   });
+
+  // Queries and Mutations
+  const { data: settings, isLoading, error } = useSettings();
+  const updateSettings = useUpdateSettings();
+  const changePassword = useChangePassword();
+
+  // Load settings data when fetched
+  useEffect(() => {
+    if (settings) {
+      if (settings.profile) setProfile(settings.profile);
+      if (settings.store) setStore(settings.store);
+      if (settings.brand) setBrand(settings.brand);
+      if (settings.notifications) setNotifications(settings.notifications);
+    }
+  }, [settings]);
 
   const sections: SettingSection[] = [
     {
@@ -104,12 +116,12 @@ const Settings = () => {
       icon: <Palette className="w-4 h-4" />,
       description: "Customize your brand look",
     },
-    {
-      id: "notifications",
-      name: "Notifications",
-      icon: <Bell className="w-4 h-4" />,
-      description: "Manage alerts and emails",
-    },
+    // {
+    //   id: "notifications",
+    //   name: "Notifications",
+    //   icon: <Bell className="w-4 h-4" />,
+    //   description: "Manage alerts and emails",
+    // },
     {
       id: "security",
       name: "Security",
@@ -118,16 +130,78 @@ const Settings = () => {
     },
   ];
 
-  const handleSaveSettings = () => {
+  const handleSaveSettings = async () => {
     setIsSaving(true);
-    setTimeout(() => {
-      setIsSaving(false);
-      setShowSaveSuccess(true);
-      setTimeout(() => setShowSaveSuccess(false), 3000);
-    }, 1000);
+    const updateData: any = {};
+
+    switch (activeSection) {
+      case "profile":
+        updateData.profile = profile;
+        break;
+      case "store":
+        updateData.store = store;
+        break;
+      case "brand":
+        updateData.brand = brand;
+        break;
+      case "notifications":
+        updateData.notifications = notifications;
+        break;
+    }
+
+    await updateSettings.mutateAsync(updateData);
+    setIsSaving(false);
+    setShowSaveSuccess(true);
+    setTimeout(() => setShowSaveSuccess(false), 3000);
   };
 
+  const handleChangePassword = async () => {
+    if (security.newPassword !== security.confirmPassword) {
+      toast.error("New passwords do not match");
+      return;
+    }
+    if (security.newPassword.length < 6) {
+      toast.error("Password must be at least 6 characters");
+      return;
+    }
+
+    await changePassword.mutateAsync({
+      currentPassword: security.currentPassword,
+      newPassword: security.newPassword,
+    });
+
+    setSecurity({ currentPassword: "", newPassword: "", confirmPassword: "" });
+  };
+
+  const handleTwoFactorToggle = async () => {
+    await updateSettings.mutateAsync({
+      security: { twoFactorEnabled: !settings?.security?.twoFactorEnabled },
+    });
+  };
+
+  if (error) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-96">
+          <div className="text-center">
+            <p className="text-red-500">Failed to load settings</p>
+            <button
+              onClick={() => window.location.reload()}
+              className="mt-4 px-4 py-2 bg-black text-white text-sm"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  console.log(profile, "Profile");
+
   const renderSection = () => {
+    if (isLoading) return <SettingsSkeleton />;
+
     switch (activeSection) {
       case "profile":
         return (
@@ -139,10 +213,18 @@ const Settings = () => {
               </label>
               <div className="flex items-center gap-4">
                 <div className="w-20 h-20 bg-gray-100 border border-gray-200 flex items-center justify-center relative group">
-                  <span className="text-2xl font-light text-gray-600">
-                    {profile.firstName.charAt(0)}
-                    {profile.lastName.charAt(0)}
-                  </span>
+                  {!profile.avatar ? (
+                    <img
+                      src={profile.avatar}
+                      alt="Avatar"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-2xl font-light text-gray-600">
+                      {profile.firstName?.charAt(0)}
+                      {profile.lastName?.charAt(0)}
+                    </span>
+                  )}
                   <button className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
                     <Camera className="w-5 h-5 text-white" />
                   </button>
@@ -166,7 +248,7 @@ const Settings = () => {
                 </label>
                 <input
                   type="text"
-                  value={profile.firstName}
+                  value={profile.firstName || ""}
                   onChange={(e) =>
                     setProfile({ ...profile, firstName: e.target.value })
                   }
@@ -179,7 +261,7 @@ const Settings = () => {
                 </label>
                 <input
                   type="text"
-                  value={profile.lastName}
+                  value={profile.lastName || ""}
                   onChange={(e) =>
                     setProfile({ ...profile, lastName: e.target.value })
                   }
@@ -192,12 +274,13 @@ const Settings = () => {
                 </label>
                 <input
                   type="email"
-                  value={profile.email}
-                  onChange={(e) =>
-                    setProfile({ ...profile, email: e.target.value })
-                  }
-                  className="w-full px-3 py-2 border border-gray-200 focus:border-black outline-none text-sm"
+                  value={profile.email || ""}
+                  disabled
+                  className="w-full px-3 py-2 border border-gray-200 bg-gray-50 outline-none text-sm cursor-not-allowed"
                 />
+                <p className="text-[9px] text-gray-400 mt-1">
+                  Email cannot be changed
+                </p>
               </div>
               <div>
                 <label className="block text-xs text-gray-500 mb-1">
@@ -205,7 +288,7 @@ const Settings = () => {
                 </label>
                 <input
                   type="tel"
-                  value={profile.phone}
+                  value={profile.phone || ""}
                   onChange={(e) =>
                     setProfile({ ...profile, phone: e.target.value })
                   }
@@ -215,7 +298,7 @@ const Settings = () => {
               <div className="md:col-span-2">
                 <label className="block text-xs text-gray-500 mb-1">Bio</label>
                 <textarea
-                  value={profile.bio}
+                  value={profile.bio || ""}
                   onChange={(e) =>
                     setProfile({ ...profile, bio: e.target.value })
                   }
@@ -228,7 +311,7 @@ const Settings = () => {
                   Timezone
                 </label>
                 <select
-                  value={profile.timezone}
+                  value={profile.timezone || "Europe/London"}
                   onChange={(e) =>
                     setProfile({ ...profile, timezone: e.target.value })
                   }
@@ -245,7 +328,7 @@ const Settings = () => {
                   Language
                 </label>
                 <select
-                  value={profile.language}
+                  value={profile.language || "English"}
                   onChange={(e) =>
                     setProfile({ ...profile, language: e.target.value })
                   }
@@ -271,7 +354,7 @@ const Settings = () => {
                 </label>
                 <input
                   type="text"
-                  value={store.storeName}
+                  value={store.storeName || ""}
                   onChange={(e) =>
                     setStore({ ...store, storeName: e.target.value })
                   }
@@ -284,7 +367,7 @@ const Settings = () => {
                 </label>
                 <input
                   type="email"
-                  value={store.storeEmail}
+                  value={store.storeEmail || ""}
                   onChange={(e) =>
                     setStore({ ...store, storeEmail: e.target.value })
                   }
@@ -297,7 +380,7 @@ const Settings = () => {
                 </label>
                 <input
                   type="tel"
-                  value={store.storePhone}
+                  value={store.storePhone || ""}
                   onChange={(e) =>
                     setStore({ ...store, storePhone: e.target.value })
                   }
@@ -310,7 +393,7 @@ const Settings = () => {
                 </label>
                 <input
                   type="text"
-                  value={store.address}
+                  value={store.address || ""}
                   onChange={(e) =>
                     setStore({ ...store, address: e.target.value })
                   }
@@ -321,7 +404,7 @@ const Settings = () => {
                 <label className="block text-xs text-gray-500 mb-1">City</label>
                 <input
                   type="text"
-                  value={store.city}
+                  value={store.city || ""}
                   onChange={(e) => setStore({ ...store, city: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-200 focus:border-black outline-none text-sm"
                 />
@@ -332,7 +415,7 @@ const Settings = () => {
                 </label>
                 <input
                   type="text"
-                  value={store.postalCode}
+                  value={store.postalCode || ""}
                   onChange={(e) =>
                     setStore({ ...store, postalCode: e.target.value })
                   }
@@ -344,7 +427,7 @@ const Settings = () => {
                   Country
                 </label>
                 <select
-                  value={store.country}
+                  value={store.country || "United Kingdom"}
                   onChange={(e) =>
                     setStore({ ...store, country: e.target.value })
                   }
@@ -363,12 +446,13 @@ const Settings = () => {
                   Currency
                 </label>
                 <select
-                  value={store.currency}
+                  value={store.currency || "NGN"}
                   onChange={(e) =>
                     setStore({ ...store, currency: e.target.value })
                   }
                   className="w-full px-3 py-2 border border-gray-200 focus:border-black outline-none text-sm bg-white"
                 >
+                  <option>NGN (₦)</option>
                   <option>GBP (£)</option>
                   <option>USD ($)</option>
                   <option>EUR (€)</option>
@@ -380,7 +464,7 @@ const Settings = () => {
                 </label>
                 <input
                   type="number"
-                  value={store.taxRate}
+                  value={store.taxRate || 0}
                   onChange={(e) =>
                     setStore({ ...store, taxRate: Number(e.target.value) })
                   }
@@ -389,11 +473,11 @@ const Settings = () => {
               </div>
               <div>
                 <label className="block text-xs text-gray-500 mb-1">
-                  Shipping Fee (£)
+                  Shipping Fee
                 </label>
                 <input
                   type="number"
-                  value={store.shippingFee}
+                  value={store.shippingFee || 0}
                   onChange={(e) =>
                     setStore({ ...store, shippingFee: Number(e.target.value) })
                   }
@@ -402,11 +486,11 @@ const Settings = () => {
               </div>
               <div>
                 <label className="block text-xs text-gray-500 mb-1">
-                  Free Shipping Threshold (£)
+                  Free Shipping Threshold
                 </label>
                 <input
                   type="number"
-                  value={store.freeShippingThreshold}
+                  value={store.freeShippingThreshold || 0}
                   onChange={(e) =>
                     setStore({
                       ...store,
@@ -429,11 +513,13 @@ const Settings = () => {
                   Store Logo
                 </label>
                 <div className="flex items-center gap-4">
-                  <img
-                    src={brand.logo}
-                    alt="Logo"
-                    className="w-24 h-12 object-contain"
-                  />
+                  {brand.logo && (
+                    <img
+                      src={brand.logo}
+                      alt="Logo"
+                      className="w-24 h-12 object-contain"
+                    />
+                  )}
                   <button className="text-xs border border-gray-200 px-3 py-1 hover:border-black transition">
                     Change Logo
                   </button>
@@ -446,11 +532,11 @@ const Settings = () => {
                 <div className="flex items-center gap-2">
                   <div
                     className="w-8 h-8 border border-gray-200"
-                    style={{ backgroundColor: brand.primaryColor }}
+                    style={{ backgroundColor: brand.primaryColor || "#000000" }}
                   />
                   <input
                     type="text"
-                    value={brand.primaryColor}
+                    value={brand.primaryColor || "#000000"}
                     onChange={(e) =>
                       setBrand({ ...brand, primaryColor: e.target.value })
                     }
@@ -465,11 +551,13 @@ const Settings = () => {
                 <div className="flex items-center gap-2">
                   <div
                     className="w-8 h-8 border border-gray-200"
-                    style={{ backgroundColor: brand.secondaryColor }}
+                    style={{
+                      backgroundColor: brand.secondaryColor || "#ffffff",
+                    }}
                   />
                   <input
                     type="text"
-                    value={brand.secondaryColor}
+                    value={brand.secondaryColor || "#ffffff"}
                     onChange={(e) =>
                       setBrand({ ...brand, secondaryColor: e.target.value })
                     }
@@ -484,11 +572,11 @@ const Settings = () => {
                 <div className="flex items-center gap-2">
                   <div
                     className="w-8 h-8 border border-gray-200"
-                    style={{ backgroundColor: brand.accentColor }}
+                    style={{ backgroundColor: brand.accentColor || "#c4a747" }}
                   />
                   <input
                     type="text"
-                    value={brand.accentColor}
+                    value={brand.accentColor || "#c4a747"}
                     onChange={(e) =>
                       setBrand({ ...brand, accentColor: e.target.value })
                     }
@@ -501,7 +589,7 @@ const Settings = () => {
                   Heading Font
                 </label>
                 <select
-                  value={brand.fontHeading}
+                  value={brand.fontHeading || "Times New Roman"}
                   onChange={(e) =>
                     setBrand({ ...brand, fontHeading: e.target.value })
                   }
@@ -518,7 +606,7 @@ const Settings = () => {
                   Body Font
                 </label>
                 <select
-                  value={brand.fontBody}
+                  value={brand.fontBody || "Inter"}
                   onChange={(e) =>
                     setBrand({ ...brand, fontBody: e.target.value })
                   }
@@ -695,7 +783,7 @@ const Settings = () => {
                   </label>
                   <div className="relative">
                     <input
-                      type={showPassword ? "text" : "password"}
+                      type={showCurrentPassword ? "text" : "password"}
                       value={security.currentPassword}
                       onChange={(e) =>
                         setSecurity({
@@ -707,10 +795,12 @@ const Settings = () => {
                       placeholder="Enter current password"
                     />
                     <button
-                      onClick={() => setShowPassword(!showPassword)}
+                      onClick={() =>
+                        setShowCurrentPassword(!showCurrentPassword)
+                      }
                       className="absolute right-2 top-1/2 transform -translate-y-1/2"
                     >
-                      {showPassword ? (
+                      {showCurrentPassword ? (
                         <EyeOff className="w-4 h-4 text-gray-400" />
                       ) : (
                         <Eye className="w-4 h-4 text-gray-400" />
@@ -722,35 +812,68 @@ const Settings = () => {
                   <label className="block text-xs text-gray-500 mb-1">
                     New Password
                   </label>
-                  <input
-                    type="password"
-                    value={security.newPassword}
-                    onChange={(e) =>
-                      setSecurity({ ...security, newPassword: e.target.value })
-                    }
-                    className="w-full px-3 py-2 border border-gray-200 focus:border-black outline-none text-sm"
-                    placeholder="Enter new password"
-                  />
+                  <div className="relative">
+                    <input
+                      type={showNewPassword ? "text" : "password"}
+                      value={security.newPassword}
+                      onChange={(e) =>
+                        setSecurity({
+                          ...security,
+                          newPassword: e.target.value,
+                        })
+                      }
+                      className="w-full px-3 py-2 border border-gray-200 focus:border-black outline-none text-sm pr-10"
+                      placeholder="Enter new password"
+                    />
+                    <button
+                      onClick={() => setShowNewPassword(!showNewPassword)}
+                      className="absolute right-2 top-1/2 transform -translate-y-1/2"
+                    >
+                      {showNewPassword ? (
+                        <EyeOff className="w-4 h-4 text-gray-400" />
+                      ) : (
+                        <Eye className="w-4 h-4 text-gray-400" />
+                      )}
+                    </button>
+                  </div>
                 </div>
                 <div>
                   <label className="block text-xs text-gray-500 mb-1">
                     Confirm New Password
                   </label>
-                  <input
-                    type="password"
-                    value={security.confirmPassword}
-                    onChange={(e) =>
-                      setSecurity({
-                        ...security,
-                        confirmPassword: e.target.value,
-                      })
-                    }
-                    className="w-full px-3 py-2 border border-gray-200 focus:border-black outline-none text-sm"
-                    placeholder="Confirm new password"
-                  />
+                  <div className="relative">
+                    <input
+                      type={showConfirmPassword ? "text" : "password"}
+                      value={security.confirmPassword}
+                      onChange={(e) =>
+                        setSecurity({
+                          ...security,
+                          confirmPassword: e.target.value,
+                        })
+                      }
+                      className="w-full px-3 py-2 border border-gray-200 focus:border-black outline-none text-sm pr-10"
+                      placeholder="Confirm new password"
+                    />
+                    <button
+                      onClick={() =>
+                        setShowConfirmPassword(!showConfirmPassword)
+                      }
+                      className="absolute right-2 top-1/2 transform -translate-y-1/2"
+                    >
+                      {showConfirmPassword ? (
+                        <EyeOff className="w-4 h-4 text-gray-400" />
+                      ) : (
+                        <Eye className="w-4 h-4 text-gray-400" />
+                      )}
+                    </button>
+                  </div>
                 </div>
-                <button className="text-sm border border-gray-200 px-4 py-1.5 hover:border-black transition">
-                  Update Password
+                <button
+                  onClick={handleChangePassword}
+                  disabled={changePassword.isPending}
+                  className="text-sm border border-gray-200 px-4 py-1.5 hover:border-black transition disabled:opacity-50"
+                >
+                  {changePassword.isPending ? "Updating..." : "Update Password"}
                 </button>
               </div>
             </div>
@@ -769,16 +892,11 @@ const Settings = () => {
                   </p>
                 </div>
                 <button
-                  onClick={() =>
-                    setSecurity({
-                      ...security,
-                      twoFactorEnabled: !security.twoFactorEnabled,
-                    })
-                  }
-                  className={`relative w-10 h-5 transition-colors ${security.twoFactorEnabled ? "bg-black" : "bg-gray-300"}`}
+                  onClick={handleTwoFactorToggle}
+                  className={`relative w-10 h-5 transition-colors ${settings?.security?.twoFactorEnabled ? "bg-black" : "bg-gray-300"}`}
                 >
                   <span
-                    className={`absolute top-0.5 w-4 h-4 bg-white transition-transform ${security.twoFactorEnabled ? "right-0.5" : "left-0.5"}`}
+                    className={`absolute top-0.5 w-4 h-4 bg-white transition-transform ${settings?.security?.twoFactorEnabled ? "right-0.5" : "left-0.5"}`}
                   />
                 </button>
               </div>
@@ -791,25 +909,12 @@ const Settings = () => {
               <div className="space-y-3">
                 <div className="flex items-center justify-between py-2 border-b border-gray-100">
                   <div>
-                    <p className="text-sm text-gray-700">Chrome on Windows</p>
+                    <p className="text-sm text-gray-700">Current Session</p>
                     <p className="text-[10px] text-gray-400">
-                      London, United Kingdom • Last active 2 minutes ago
+                      This device • Active now
                     </p>
                   </div>
-                  <button className="text-xs text-red-500 hover:text-red-600">
-                    Revoke
-                  </button>
-                </div>
-                <div className="flex items-center justify-between py-2">
-                  <div>
-                    <p className="text-sm text-gray-700">Safari on iPhone</p>
-                    <p className="text-[10px] text-gray-400">
-                      London, United Kingdom • Last active 2 days ago
-                    </p>
-                  </div>
-                  <button className="text-xs text-red-500 hover:text-red-600">
-                    Revoke
-                  </button>
+                  <span className="text-xs text-green-600">Current</span>
                 </div>
               </div>
             </div>
@@ -866,10 +971,10 @@ const Settings = () => {
             </AnimatePresence>
             <button
               onClick={handleSaveSettings}
-              disabled={isSaving}
+              disabled={isSaving || updateSettings.isPending}
               className="flex items-center gap-2 px-4 py-2 bg-black text-white text-sm hover:bg-black/90 transition disabled:opacity-50"
             >
-              {isSaving ? (
+              {isSaving || updateSettings.isPending ? (
                 <RefreshCw className="w-4 h-4 animate-spin" />
               ) : (
                 <Save className="w-4 h-4" />
