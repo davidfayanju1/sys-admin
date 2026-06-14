@@ -1,4 +1,5 @@
 import axios from "axios";
+import { toast } from "sonner";
 
 // Create base Axios instance
 const api = axios.create({
@@ -152,9 +153,12 @@ api.interceptors.response.use(
       }
     }
 
-    // Handle 403 Forbidden (invalid token)
+    // Handle 403 Forbidden (role-based access denial)
     if (error.response?.status === 403) {
-      logoutUser();
+      toast.error("You are not authorized to access this resource.", {
+        duration: 4000,
+        position: "bottom-right",
+      });
       return Promise.reject(error);
     }
 
