@@ -1,5 +1,6 @@
-import DataTableComponent, { type TableColumn } from "react-data-table-component";
-const DataTable = (DataTableComponent as any).default || DataTableComponent;
+import DataTableComponent, {
+  type TableColumn,
+} from "react-data-table-component";
 import {
   Clock,
   Package,
@@ -18,6 +19,8 @@ export interface Order {
   date: string;
   items: number;
 }
+
+const DataTable = (DataTableComponent as any).default || DataTableComponent;
 
 const getStatusColor = (status: Order["status"]): string => {
   const colors: Record<Order["status"], string> = {

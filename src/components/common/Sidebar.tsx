@@ -11,6 +11,8 @@ import {
   ClipboardList,
   Tags,
   X,
+  ScrollText,
+  BriefcaseBusiness,
 } from "lucide-react";
 import { toast } from "sonner";
 import api from "../../lib/axios";
@@ -51,6 +53,18 @@ const Sidebar = () => {
           label: "Inventory",
           path: "/inventory",
           active: location.pathname === "/inventory",
+        },
+        {
+          icon: ScrollText,
+          label: "Expense",
+          path: "/expenses",
+          active: location.pathname === "/expenses",
+        },
+        {
+          icon: BriefcaseBusiness,
+          label: "Staffs",
+          path: "/staffs",
+          active: location.pathname === "/staffs",
         },
       ],
     },
