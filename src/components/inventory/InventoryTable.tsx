@@ -1,5 +1,6 @@
 // components/inventory/InventoryTable.tsx
 import { RefreshCw, Trash2 } from "lucide-react";
+import RowActionMenu from "../UI/RowActionMenu";
 import DataTableComponent, {
   type TableColumn,
 } from "react-data-table-component";
@@ -199,28 +200,13 @@ const InventoryTable = ({
       right: true,
       width: "120px",
       cell: (row: InventoryItem) => (
-        <div className="flex items-center justify-end gap-2">
-          <button
-            onClick={() => onAdjustStock(row)}
-            className="p-1 hover:bg-gray-100 transition"
-            title="Adjust Stock"
-          >
-            <RefreshCw className="w-4 h-4 text-gray-500" />
-          </button>
-          {/* <button
-            onClick={() => onEdit(row)}
-            className="p-1 hover:bg-gray-100 transition"
-            title="Edit"
-          >
-            <Edit className="w-4 h-4 text-gray-500" />
-          </button> */}
-          <button
-            onClick={() => onDelete(row)}
-            className="p-1 hover:bg-gray-100 transition"
-            title="Delete"
-          >
-            <Trash2 className="w-4 h-4 text-red-500" />
-          </button>
+        <div className="flex items-center justify-end">
+          <RowActionMenu
+            actions={[
+              { icon: RefreshCw, label: "Adjust Stock", onClick: () => onAdjustStock(row) },
+              { icon: Trash2, label: "Delete", onClick: () => onDelete(row), destructive: true },
+            ]}
+          />
         </div>
       ),
     },

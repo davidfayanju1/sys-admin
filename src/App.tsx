@@ -19,6 +19,9 @@ import ScrollToTop from "./components/common/ScrollToTop";
 import ForgotPassword from "./pages/auth/forgot-password";
 import Expense from "./pages/expense";
 import Staffs from "./pages/staffs";
+import Appointments from "./pages/appointments";
+import Feedback from "./pages/feedback";
+import Messages from "./pages/messages";
 
 function App() {
   return (
@@ -134,6 +137,30 @@ function App() {
             element={
               <ProtectedRoute>
                 <Expense />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/appointments"
+            element={
+              <ProtectedRoute>
+                <Appointments />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/feedback"
+            element={
+              <ProtectedRoute>
+                <Feedback />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/messages"
+            element={
+              <ProtectedRoute>
+                <Messages />
               </ProtectedRoute>
             }
           />

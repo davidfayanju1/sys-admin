@@ -1,5 +1,6 @@
 // components/products/ProductTable.tsx
 import { Edit, Copy, Trash2, Package, Eye } from "lucide-react";
+import RowActionMenu from "../UI/RowActionMenu";
 import DataTableComponent, {
   type TableColumn,
 } from "react-data-table-component";
@@ -24,7 +25,7 @@ interface ProductTableProps {
 const ProductTable = ({
   products,
   totalRows,
-  // currentPage,
+  currentPage,
   itemsPerPage,
   onPageChange,
   onPerRowsChange,
@@ -106,6 +107,16 @@ const ProductTable = ({
 
   const columns: TableColumn<Product>[] = [
     {
+      name: "S/N",
+      width: "60px",
+      center: true,
+      cell: (_row: Product, rowIndex: number) => (
+        <span className="text-xs text-black/40 font-light">
+          {((currentPage ?? 1) - 1) * itemsPerPage + rowIndex + 1}
+        </span>
+      ),
+    },
+    {
       name: "Product",
       selector: (row: Product) => row.name || row.title || "",
       sortable: true,
@@ -185,32 +196,16 @@ const ProductTable = ({
     },
     {
       name: "Actions",
-      right: true,
-      width: "120px",
+      center: true,
+      width: "70px",
       cell: (row: Product) => (
-        <div className="flex items-center justify-end gap-2">
-          <button
-            onClick={() => onEdit(row)}
-            className="p-1 hover:bg-gray-100 transition"
-            title="Edit"
-          >
-            <Edit className="w-4 h-4 text-gray-500" />
-          </button>
-          <button
-            onClick={() => onDuplicate(row.id || row._id)}
-            className="p-1 hover:bg-gray-100 transition"
-            title="Duplicate"
-          >
-            <Copy className="w-4 h-4 text-gray-500" />
-          </button>
-          <button
-            onClick={() => onDelete(row)}
-            className="p-1 hover:bg-gray-100 transition"
-            title="Delete"
-          >
-            <Trash2 className="w-4 h-4 text-red-500" />
-          </button>
-        </div>
+        <RowActionMenu
+          actions={[
+            { icon: Edit, label: "Edit", onClick: () => onEdit(row) },
+            { icon: Copy, label: "Duplicate", onClick: () => onDuplicate(row.id || row._id) },
+            { icon: Trash2, label: "Delete", onClick: () => onDelete(row), destructive: true },
+          ]}
+        />
       ),
     },
   ];

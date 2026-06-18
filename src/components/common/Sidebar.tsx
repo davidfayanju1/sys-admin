@@ -13,6 +13,9 @@ import {
   X,
   ScrollText,
   BriefcaseBusiness,
+  CalendarClock,
+  MessageSquare,
+  Inbox,
 } from "lucide-react";
 import { toast } from "sonner";
 import api from "../../lib/axios";
@@ -66,6 +69,12 @@ const Sidebar = () => {
           path: "/staffs",
           active: location.pathname === "/staffs",
         },
+        {
+          icon: CalendarClock,
+          label: "Appointments",
+          path: "/appointments",
+          active: location.pathname === "/appointments",
+        },
       ],
     },
     {
@@ -76,6 +85,18 @@ const Sidebar = () => {
           label: "Customers",
           path: "/customers",
           active: location.pathname === "/customers",
+        },
+        {
+          icon: MessageSquare,
+          label: "Feedback",
+          path: "/feedback",
+          active: location.pathname === "/feedback",
+        },
+        {
+          icon: Inbox,
+          label: "Messages",
+          path: "/messages",
+          active: location.pathname === "/messages",
         },
       ],
     },

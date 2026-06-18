@@ -18,6 +18,7 @@ import {
   Pencil,
   RefreshCw,
 } from "lucide-react";
+import RowActionMenu from "../components/UI/RowActionMenu";
 import DataTableComponent, { type TableColumn } from "react-data-table-component";
 import { AnimatePresence, motion } from "framer-motion";
 import StatCard from "../components/UI/StatCard";
@@ -269,6 +270,16 @@ const Staffs = () => {
   const columns: TableColumn<StaffUser>[] = useMemo(
     () => [
       {
+        name: "S/N",
+        width: "60px",
+        center: true,
+        cell: (_row: StaffUser, rowIndex: number) => (
+          <span className="text-xs text-black/40 font-light">
+            {(currentPage - 1) * rowsPerPage + rowIndex + 1}
+          </span>
+        ),
+      },
+      {
         name: "Staff Member",
         selector: (row) => row.fullName,
         sortable: true,
@@ -375,60 +386,22 @@ const Staffs = () => {
       {
         name: "Actions",
         center: true,
-        width: "160px",
+        width: "70px",
         cell: (row) => (
-          <div className="flex items-center gap-0.5">
-            <button
-              onClick={() => setViewUserId(row.id)}
-              className="p-1.5 hover:bg-black/5 transition text-black/40 hover:text-black"
-              title="View"
-            >
-              <Eye className="w-3.5 h-3.5" />
-            </button>
-            {row.actions?.canEdit && (
-              <button
-                onClick={() => handleOpenEdit(row)}
-                className="p-1.5 hover:bg-black/5 transition text-black/40 hover:text-black"
-                title="Edit"
-              >
-                <Edit className="w-3.5 h-3.5" />
-              </button>
-            )}
-            {row.actions?.canDeactivate && (
-              <button
-                onClick={() => deactivateStaff.mutate(row.id)}
-                disabled={deactivateStaff.isPending}
-                className="p-1.5 hover:bg-yellow-50 transition text-black/40 hover:text-yellow-600 disabled:opacity-40"
-                title="Deactivate"
-              >
-                <UserX className="w-3.5 h-3.5" />
-              </button>
-            )}
-            {row.actions?.canActivate && (
-              <button
-                onClick={() => activateStaff.mutate(row.id)}
-                disabled={activateStaff.isPending}
-                className="p-1.5 hover:bg-green-50 transition text-black/40 hover:text-green-600 disabled:opacity-40"
-                title="Activate"
-              >
-                <UserCheck className="w-3.5 h-3.5" />
-              </button>
-            )}
-            {row.actions?.canDelete && (
-              <button
-                onClick={() => setDeletingUser(row)}
-                className="p-1.5 hover:bg-red-50 transition text-black/40 hover:text-red-500"
-                title="Delete"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-              </button>
-            )}
-          </div>
+          <RowActionMenu
+            actions={[
+              { icon: Eye, label: "View Details", onClick: () => setViewUserId(row.id) },
+              { icon: Edit, label: "Edit", onClick: () => handleOpenEdit(row), hidden: !row.actions?.canEdit },
+              { icon: UserX, label: "Deactivate", onClick: () => deactivateStaff.mutate(row.id), disabled: deactivateStaff.isPending, hidden: !row.actions?.canDeactivate },
+              { icon: UserCheck, label: "Activate", onClick: () => activateStaff.mutate(row.id), disabled: activateStaff.isPending, hidden: !row.actions?.canActivate },
+              { icon: Trash2, label: "Delete", onClick: () => setDeletingUser(row), destructive: true, hidden: !row.actions?.canDelete },
+            ]}
+          />
         ),
       },
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [deactivateStaff.isPending, activateStaff.isPending],
+    [currentPage, rowsPerPage, deactivateStaff.isPending, activateStaff.isPending],
   );
 
   return (

@@ -2,7 +2,6 @@
 import { useState, useMemo } from "react";
 import DashboardLayout from "../layout/DashboardLayout";
 import {
-  Eye,
   Package,
   Truck,
   CheckCircle,
@@ -11,10 +10,12 @@ import {
   Search,
   Download,
   ShoppingBag,
+  Eye,
 } from "lucide-react";
 import DataTableComponent, {
   type TableColumn,
 } from "react-data-table-component";
+import RowActionMenu from "../components/UI/RowActionMenu";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { useOrders, useOrderSummary, type Order } from "../hooks/useOrders";
@@ -207,6 +208,16 @@ const Orders = () => {
   const columns: TableColumn<Order>[] = useMemo(
     () => [
       {
+        name: "S/N",
+        width: "60px",
+        center: true,
+        cell: (_row: Order, rowIndex: number) => (
+          <span className="text-xs text-black/40 font-light">
+            {(currentPage - 1) * rowsPerPage + rowIndex + 1}
+          </span>
+        ),
+      },
+      {
         name: "Order ID",
         selector: (row) => row.id,
         sortable: true,
@@ -275,19 +286,17 @@ const Orders = () => {
       {
         name: "Actions",
         center: true,
+        width: "70px",
         cell: (row) => (
-          <button
-            onClick={() => setSelectedOrderId(row._id)}
-            className="p-1.5 hover:bg-black/5 transition-colors text-black/60 hover:text-black"
-            title="View Details"
-          >
-            <Eye className="w-4 h-4" />
-          </button>
+          <RowActionMenu
+            actions={[
+              { icon: Eye, label: "View Details", onClick: () => setSelectedOrderId(row._id) },
+            ]}
+          />
         ),
-        width: "80px",
       },
     ],
-    [],
+    [currentPage, rowsPerPage],
   );
 
   const handleExport = () => {

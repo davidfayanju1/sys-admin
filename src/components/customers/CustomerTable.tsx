@@ -1,5 +1,6 @@
 // components/customers/CustomerTable.tsx
 import { Eye, ShoppingBag, MapPin, User } from "lucide-react";
+import RowActionMenu from "../UI/RowActionMenu";
 import DataTableComponent, {
   type TableColumn,
 } from "react-data-table-component";
@@ -215,17 +216,15 @@ const CustomerTable = ({
       cell: (row: Customer) => getStatusBadge(row.status),
     },
     {
-      name: "Action",
-      right: true,
-      width: "150px",
+      name: "Actions",
+      center: true,
+      width: "70px",
       cell: (row: Customer) => (
-        <button
-          onClick={() => onViewCustomer(row)}
-          className="inline-flex cursor-pointer items-center justify-center gap-1.5 px-3 py-1.5 border border-gray-300 text-xs font-medium text-gray-700 hover:bg-gray-50 hover:border-gray-400 transition-all w-full"
-        >
-          <Eye className="w-3.5 h-3.5" />
-          View
-        </button>
+        <RowActionMenu
+          actions={[
+            { icon: Eye, label: "View Details", onClick: () => onViewCustomer(row) },
+          ]}
+        />
       ),
     },
   ];

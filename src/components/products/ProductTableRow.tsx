@@ -1,6 +1,7 @@
 // components/products/ProductTableRow.tsx
 import { Edit, Copy, Trash2 } from "lucide-react";
 import type { Product } from "../../types/product";
+import RowActionMenu from "../UI/RowActionMenu";
 
 interface ProductTableRowProps {
   product: Product;
@@ -102,28 +103,14 @@ const ProductTableRow = ({
       </td>
       <td className="px-4 py-3">{getStatusBadge(product.status)}</td>
       <td className="px-4 py-3 text-right">
-        <div className="flex items-center justify-end gap-2">
-          <button
-            onClick={() => onEdit(product)}
-            className="p-1 hover:bg-gray-100 transition"
-            title="Edit"
-          >
-            <Edit className="w-4 h-4 text-gray-500" />
-          </button>
-          <button
-            onClick={() => onDuplicate(product.id)}
-            className="p-1 hover:bg-gray-100 transition"
-            title="Duplicate"
-          >
-            <Copy className="w-4 h-4 text-gray-500" />
-          </button>
-          <button
-            onClick={() => onDelete(product)}
-            className="p-1 hover:bg-gray-100 transition"
-            title="Delete"
-          >
-            <Trash2 className="w-4 h-4 text-red-500" />
-          </button>
+        <div className="flex items-center justify-end">
+          <RowActionMenu
+            actions={[
+              { icon: Edit, label: "Edit", onClick: () => onEdit(product) },
+              { icon: Copy, label: "Duplicate", onClick: () => onDuplicate(product.id) },
+              { icon: Trash2, label: "Delete", onClick: () => onDelete(product), destructive: true },
+            ]}
+          />
         </div>
       </td>
     </tr>

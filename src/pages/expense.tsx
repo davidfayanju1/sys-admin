@@ -14,6 +14,7 @@ import {
   ArrowDownRight,
   X,
 } from "lucide-react";
+import RowActionMenu from "../components/UI/RowActionMenu";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface Transaction {
@@ -440,6 +441,9 @@ const Expense = () => {
           <table className="w-full">
             <thead className="border-b border-black/10">
               <tr>
+                <th className="text-center py-4 px-4 text-[10px] uppercase tracking-[0.15em] text-black/50 font-normal w-12">
+                  S/N
+                </th>
                 <th className="text-left py-4 px-4 text-[10px] uppercase tracking-[0.15em] text-black/50 font-normal">
                   Date
                 </th>
@@ -458,7 +462,7 @@ const Expense = () => {
                 <th className="text-left py-4 px-4 text-[10px] uppercase tracking-[0.15em] text-black/50 font-normal">
                   Status
                 </th>
-                <th className="text-center py-4 px-4 text-[10px] uppercase tracking-[0.15em] text-black/50 font-normal">
+                <th className="text-center py-4 px-4 text-[10px] uppercase tracking-[0.15em] text-black/50 font-normal w-16">
                   Actions
                 </th>
               </tr>
@@ -466,7 +470,7 @@ const Expense = () => {
             <tbody>
               {paginatedTransactions.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="text-center py-12">
+                  <td colSpan={8} className="text-center py-12">
                     <p className="text-sm text-black/40">
                       No transactions found
                     </p>
@@ -481,6 +485,11 @@ const Expense = () => {
                     transition={{ delay: index * 0.02 }}
                     className="border-b border-black/5 hover:bg-black/5 transition"
                   >
+                    <td className="py-3 px-4 text-center">
+                      <span className="text-xs text-black/40 font-light">
+                        {(currentPage - 1) * rowsPerPage + index + 1}
+                      </span>
+                    </td>
                     <td className="py-3 px-4 text-sm text-black/70">
                       {new Date(transaction.date).toLocaleDateString()}
                     </td>
@@ -535,21 +544,13 @@ const Expense = () => {
                       </span>
                     </td>
                     <td className="py-3 px-4">
-                      <div className="flex items-center justify-center gap-2">
-                        <button
-                          onClick={() => setSelectedTransaction(transaction)}
-                          className="p-1 hover:bg-black/5 transition"
-                        >
-                          <Eye className="w-4 h-4 text-black/40" />
-                        </button>
-                        <button
-                          onClick={() =>
-                            handleDeleteTransaction(transaction.id)
-                          }
-                          className="p-1 hover:bg-black/5 transition"
-                        >
-                          <Trash2 className="w-4 h-4 text-red-500" />
-                        </button>
+                      <div className="flex items-center justify-center">
+                        <RowActionMenu
+                          actions={[
+                            { icon: Eye, label: "View Details", onClick: () => setSelectedTransaction(transaction) },
+                            { icon: Trash2, label: "Delete", onClick: () => handleDeleteTransaction(transaction.id), destructive: true },
+                          ]}
+                        />
                       </div>
                     </td>
                   </motion.tr>
