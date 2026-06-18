@@ -22,6 +22,7 @@ import Staffs from "./pages/staffs";
 import Appointments from "./pages/appointments";
 import Feedback from "./pages/feedback";
 import Messages from "./pages/messages";
+import Services from "./pages/services";
 
 function App() {
   return (
@@ -161,6 +162,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <Messages />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/services"
+            element={
+              <ProtectedRoute>
+                <Services />
               </ProtectedRoute>
             }
           />

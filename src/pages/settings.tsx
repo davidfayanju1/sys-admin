@@ -1,5 +1,5 @@
 // pages/Settings.tsx
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import DashboardLayout from "../layout/DashboardLayout";
 import {
@@ -19,6 +19,7 @@ import {
   useUpdateSettings,
   useChangePassword,
 } from "../hooks/useSettings";
+import { useUploadMedia } from "../hooks/useMedia";
 import { toast } from "sonner";
 
 interface SettingSection {
@@ -86,6 +87,30 @@ const Settings = () => {
   const { data: settings, isLoading, error } = useSettings();
   const updateSettings = useUpdateSettings();
   const changePassword = useChangePassword();
+  const uploadMedia = useUploadMedia();
+
+  // File input refs for image uploads
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+  const logoInputRef = useRef<HTMLInputElement>(null);
+
+  const handleImageUpload = (
+    file: File,
+    onSuccess: (url: string) => void
+  ) => {
+    if (!file.type.startsWith("image/")) {
+      toast.error("Only image files are allowed");
+      return;
+    }
+    const fd = new FormData();
+    fd.append("file", file);
+    uploadMedia.mutate(fd, {
+      onSuccess: (res) => {
+        onSuccess(res.data.url);
+        toast.success("Image uploaded");
+      },
+      onError: () => toast.error("Upload failed. Please try again."),
+    });
+  };
 
   // Load settings data when fetched
   useEffect(() => {
@@ -212,8 +237,11 @@ const Settings = () => {
                 Profile Picture
               </label>
               <div className="flex items-center gap-4">
-                <div className="w-20 h-20 bg-gray-100 border border-gray-200 flex items-center justify-center relative group">
-                  {!profile.avatar ? (
+                <div
+                  className="w-20 h-20 bg-gray-100 border border-gray-200 flex items-center justify-center relative group cursor-pointer"
+                  onClick={() => avatarInputRef.current?.click()}
+                >
+                  {profile.avatar ? (
                     <img
                       src={profile.avatar}
                       alt="Avatar"
@@ -225,18 +253,38 @@ const Settings = () => {
                       {profile.lastName?.charAt(0)}
                     </span>
                   )}
-                  <button className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
-                    <Camera className="w-5 h-5 text-white" />
-                  </button>
+                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition flex items-center justify-center">
+                    {uploadMedia.isPending ? (
+                      <RefreshCw className="w-5 h-5 text-white animate-spin" />
+                    ) : (
+                      <Camera className="w-5 h-5 text-white" />
+                    )}
+                  </div>
                 </div>
                 <div>
                   <p className="text-xs text-gray-500">
-                    JPG, GIF or PNG. Max size 2MB.
+                    JPG, PNG or WebP. Max size 10MB.
                   </p>
-                  <button className="mt-2 text-xs text-black border border-gray-200 px-3 py-1 hover:border-black transition">
-                    Upload
+                  <button
+                    type="button"
+                    disabled={uploadMedia.isPending}
+                    onClick={() => avatarInputRef.current?.click()}
+                    className="mt-2 text-xs text-black border border-gray-200 px-3 py-1 hover:border-black transition disabled:opacity-40"
+                  >
+                    {uploadMedia.isPending ? "Uploading…" : "Upload Photo"}
                   </button>
                 </div>
+                <input
+                  ref={avatarInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleImageUpload(file, (url) => setProfile({ ...profile, avatar: url }));
+                    e.target.value = "";
+                  }}
+                />
               </div>
             </div>
 
@@ -513,16 +561,47 @@ const Settings = () => {
                   Store Logo
                 </label>
                 <div className="flex items-center gap-4">
-                  {brand.logo && (
+                  {brand.logo ? (
                     <img
                       src={brand.logo}
                       alt="Logo"
-                      className="w-24 h-12 object-contain"
+                      className="w-24 h-12 object-contain border border-gray-100"
                     />
+                  ) : (
+                    <div className="w-24 h-12 bg-gray-50 border border-gray-200 flex items-center justify-center text-[10px] text-gray-400">
+                      No logo
+                    </div>
                   )}
-                  <button className="text-xs border border-gray-200 px-3 py-1 hover:border-black transition">
-                    Change Logo
-                  </button>
+                  <div className="flex flex-col gap-1.5">
+                    <button
+                      type="button"
+                      disabled={uploadMedia.isPending}
+                      onClick={() => logoInputRef.current?.click()}
+                      className="text-xs text-black border border-gray-200 px-3 py-1 hover:border-black transition disabled:opacity-40"
+                    >
+                      {uploadMedia.isPending ? "Uploading…" : brand.logo ? "Change Logo" : "Upload Logo"}
+                    </button>
+                    {brand.logo && (
+                      <button
+                        type="button"
+                        onClick={() => setBrand({ ...brand, logo: "" })}
+                        className="text-[10px] text-red-400 hover:text-red-600 text-left transition"
+                      >
+                        Remove
+                      </button>
+                    )}
+                  </div>
+                  <input
+                    ref={logoInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handleImageUpload(file, (url) => setBrand({ ...brand, logo: url }));
+                      e.target.value = "";
+                    }}
+                  />
                 </div>
               </div>
               <div>

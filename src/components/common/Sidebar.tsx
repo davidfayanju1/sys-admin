@@ -16,6 +16,7 @@ import {
   CalendarClock,
   MessageSquare,
   Inbox,
+  Layers,
 } from "lucide-react";
 import { toast } from "sonner";
 import api from "../../lib/axios";
@@ -68,6 +69,12 @@ const Sidebar = () => {
           label: "Staffs",
           path: "/staffs",
           active: location.pathname === "/staffs",
+        },
+        {
+          icon: Layers,
+          label: "Services",
+          path: "/services",
+          active: location.pathname === "/services",
         },
         {
           icon: CalendarClock,
