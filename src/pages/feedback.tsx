@@ -139,7 +139,7 @@ const Feedback = () => {
     currentPage,
     rowsPerPage,
     searchTerm,
-    sentimentFilter
+    sentimentFilter,
   );
   const items = feedbackResponse?.data ?? [];
   const meta = feedbackResponse?.meta ?? { total: 0 };
@@ -183,11 +183,13 @@ const Feedback = () => {
               )}
             </p>
             {row.email && (
-              <p className="text-[10px] text-black/40 font-light">{row.email}</p>
+              <p className="text-[10px] text-black/40 font-light">
+                {row.email}
+              </p>
             )}
           </div>
         ),
-        minWidth: "180px",
+        width: "240px",
       },
       {
         name: "Feedback",
@@ -197,15 +199,15 @@ const Feedback = () => {
             {row.feedback}
           </p>
         ),
-        grow: 2,
+        minWidth: "420px",
       },
-      {
-        name: "Sentiment",
-        selector: (row) => row.sentiment ?? "",
-        sortable: true,
-        cell: (row) => <SentimentBadge sentiment={row.sentiment} />,
-        width: "130px",
-      },
+      // {
+      //   name: "Sentiment",
+      //   selector: (row) => row.sentiment ?? "",
+      //   sortable: true,
+      //   cell: (row) => <SentimentBadge sentiment={row.sentiment} />,
+      //   width: "130px",
+      // },
       {
         name: "Date",
         selector: (row) => row.createdAt,
@@ -224,17 +226,21 @@ const Feedback = () => {
       {
         name: "Actions",
         center: true,
-        width: "70px",
+        width: "100px",
         cell: (row) => (
           <RowActionMenu
             actions={[
-              { icon: Eye, label: "Read Feedback", onClick: () => setSelected(row) },
+              {
+                icon: Eye,
+                label: "Read Feedback",
+                onClick: () => setSelected(row),
+              },
             ]}
           />
         ),
       },
     ],
-    [currentPage, rowsPerPage]
+    [currentPage, rowsPerPage],
   );
 
   const handleExport = () => {

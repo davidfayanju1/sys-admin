@@ -13,8 +13,12 @@ import {
   MapPin,
   ChevronDown,
   X,
+  Mail,
+  Video,
 } from "lucide-react";
 import RowActionMenu from "../components/UI/RowActionMenu";
+import SendEmailModal from "../components/appointments/SendEmailModal";
+import ScheduleMeetingModal from "../components/appointments/ScheduleMeetingModal";
 import DataTableComponent, {
   type TableColumn,
 } from "react-data-table-component";
@@ -181,6 +185,10 @@ const Appointments = () => {
   const [rowsPerPage, setRowsPerPage] = useState(20);
   const [selectedAppointment, setSelectedAppointment] =
     useState<Appointment | null>(null);
+  const [emailModalAppointment, setEmailModalAppointment] =
+    useState<Appointment | null>(null);
+  const [meetingModalAppointment, setMeetingModalAppointment] =
+    useState<Appointment | null>(null);
 
   const { data: appointmentsResponse, isLoading } = useAppointments(
     currentPage,
@@ -310,6 +318,8 @@ const Appointments = () => {
           <RowActionMenu
             actions={[
               { icon: Eye, label: "View Details", onClick: () => setSelectedAppointment(row) },
+              { icon: Mail, label: "Send Email", onClick: () => setEmailModalAppointment(row), hidden: row.consultationFormat !== "in-studio" },
+              { icon: Video, label: "Schedule Meeting", onClick: () => setMeetingModalAppointment(row), hidden: row.consultationFormat !== "virtual" },
             ]}
           />
         ),
@@ -610,10 +620,53 @@ const Appointments = () => {
                   </>
                 )}
               </div>
+
+              {/* Drawer Footer — quick actions */}
+              <div className="px-6 py-4 border-t border-black/10 shrink-0">
+                {selectedAppointment.consultationFormat === "in-studio" ? (
+                  <button
+                    onClick={() => {
+                      setEmailModalAppointment(selectedAppointment);
+                      setSelectedAppointment(null);
+                    }}
+                    className="w-full flex items-center justify-center gap-2 py-2.5 bg-black text-white text-sm hover:bg-black/80 transition"
+                  >
+                    <Mail className="w-3.5 h-3.5" />
+                    Send Email to Client
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => {
+                      setMeetingModalAppointment(selectedAppointment);
+                      setSelectedAppointment(null);
+                    }}
+                    className="w-full flex items-center justify-center gap-2 py-2.5 bg-[#1a73e8] text-white text-sm hover:bg-[#1557b0] transition"
+                  >
+                    <Video className="w-3.5 h-3.5" />
+                    Schedule Google Meet
+                  </button>
+                )}
+              </div>
             </motion.div>
           </>
         )}
       </AnimatePresence>
+
+      {/* Email Modal — In-Studio appointments */}
+      {emailModalAppointment && (
+        <SendEmailModal
+          appointment={emailModalAppointment}
+          onClose={() => setEmailModalAppointment(null)}
+        />
+      )}
+
+      {/* Meeting Modal — Virtual appointments */}
+      {meetingModalAppointment && (
+        <ScheduleMeetingModal
+          appointment={meetingModalAppointment}
+          onClose={() => setMeetingModalAppointment(null)}
+        />
+      )}
     </DashboardLayout>
   );
 };

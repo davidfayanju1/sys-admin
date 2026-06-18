@@ -1,4 +1,27 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import api from "../lib/axios";
+
+export interface SendEmailPayload {
+  subject: string;
+  message: string;
+}
+
+export interface ScheduleMeetingPayload {
+  meetingLink: string;
+  message: string;
+}
+
+export const useSendAppointmentEmail = () =>
+  useMutation({
+    mutationFn: ({ id, ...payload }: SendEmailPayload & { id: string }) =>
+      api.post(`/appointments/${id}/send-email`, payload).then((r) => r.data),
+  });
+
+export const useScheduleMeeting = () =>
+  useMutation({
+    mutationFn: ({ id, ...payload }: ScheduleMeetingPayload & { id: string }) =>
+      api.post(`/appointments/${id}/schedule-meeting`, payload).then((r) => r.data),
+  });
 
 export interface Appointment {
   _id: string;
