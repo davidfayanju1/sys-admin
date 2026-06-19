@@ -67,7 +67,7 @@ const Products = () => {
     size: "",
     sku: "",
     price: 0,
-    currency: "GBP",
+    currency: "NGN",
     stock: 0,
     images: [],
   });
@@ -107,7 +107,7 @@ const Products = () => {
         size: "",
         sku: "",
         price: 0,
-        currency: "GBP",
+        currency: "NGN",
         stock: 0,
         images: [],
       });
@@ -179,7 +179,7 @@ const Products = () => {
       size: "",
       sku: "",
       price: 0,
-      currency: "GBP",
+      currency: "NGN",
       stock: 0,
       images: [],
     });

@@ -319,7 +319,7 @@ const Orders = () => {
       order.customer,
       new Date(order.date).toLocaleDateString(),
       order.items,
-      Number(order.amount).toLocaleString(undefined, {
+      "₦" + Number(order.amount).toLocaleString(undefined, {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
       }),

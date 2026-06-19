@@ -32,7 +32,7 @@ const VariantTable = ({ variants, onRemoveVariant }: VariantTableProps) => {
               <td className="px-3 py-2">{variant.size}</td>
               <td className="px-3 py-2 font-mono text-xs">{variant.sku}</td>
               <td className="px-3 py-2">
-                {variant.currency === "GBP" ? "£" : "₦"}
+                ₦
                 {(variant.price / 100).toFixed(2)}
               </td>
               <td className="px-3 py-2">{variant.stock}</td>

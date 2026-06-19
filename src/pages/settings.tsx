@@ -500,10 +500,7 @@ const Settings = () => {
                   }
                   className="w-full px-3 py-2 border border-gray-200 focus:border-black outline-none text-sm bg-white"
                 >
-                  <option>NGN (₦)</option>
-                  <option>GBP (£)</option>
-                  <option>USD ($)</option>
-                  <option>EUR (€)</option>
+                  <option value="NGN">NGN (₦)</option>
                 </select>
               </div>
               <div>

@@ -49,7 +49,7 @@ const ProductTableRow = ({
     const prices = variants.map((v) => v.price / 100);
     const min = Math.min(...prices);
     const max = Math.max(...prices);
-    const currency = variants[0]?.currency === "GBP" ? "£" : "₦";
+    const currency = "₦";
     return min === max
       ? `${currency}${min.toFixed(2)}`
       : `${currency}${min.toFixed(2)} - ${currency}${max.toFixed(2)}`;

@@ -78,12 +78,11 @@ const ProductTable = ({
       const prices = product.variants.map((v) => v.price / 100);
       const min = Math.min(...prices);
       const max = Math.max(...prices);
-      const currency = product.variants[0]?.currency === "GBP" ? "£" : "₦";
       return min === max
-        ? `${currency}${min.toFixed(2)}`
-        : `${currency}${min.toFixed(2)} - ${currency}${max.toFixed(2)}`;
+        ? `₦${min.toFixed(2)}`
+        : `₦${min.toFixed(2)} - ₦${max.toFixed(2)}`;
     }
-    const currency = product.currency === "GBP" ? "£" : "₦";
+    const currency = "₦";
     const price = (product.finalPrice || product.price) / 100;
     return `${currency}${price.toFixed(2)}`;
   };

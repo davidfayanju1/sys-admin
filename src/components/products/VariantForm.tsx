@@ -43,7 +43,7 @@ const VariantForm = ({
         />
         <input
           type="number"
-          placeholder="Price (£)"
+          placeholder="Price (₦)"
           value={variant.price || ""}
           onChange={(e) =>
             onVariantChange({ ...variant, price: parseFloat(e.target.value) })
