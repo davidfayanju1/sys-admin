@@ -2,19 +2,20 @@
 import { useState } from "react";
 import DashboardLayout from "../layout/DashboardLayout";
 import { Plus } from "lucide-react";
+import { toast } from "sonner";
 import {
   useProducts,
   useProductSummary,
   useCreateProduct,
   useUpdateProduct,
   useDeleteProduct,
-  useDuplicateProduct,
 } from "../hooks/useProducts";
 import ProductStats from "../components/products/ProductsStats";
 import ProductSearchFilters from "../components/products/ProductSearchFilter";
 import ProductTable from "../components/products/ProductTable";
 import ProductFormModal from "../components/products/ProductFormModal";
 import DeleteConfirmModal from "../components/products/DeleteConfirmModal";
+import ProductDetailDrawer from "../components/products/ProductDetailDrawer";
 import type { Product, Variant } from "../types/product";
 
 // Helper function to transform API product to form data
@@ -50,6 +51,7 @@ const Products = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [productToDelete, setProductToDelete] = useState<Product | null>(null);
+  const [viewingProduct, setViewingProduct] = useState<Product | null>(null);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -72,6 +74,8 @@ const Products = () => {
     images: [],
   });
 
+  const [editingVariantIdx, setEditingVariantIdx] = useState(-1);
+
   // Queries
   const { data: productsData, isLoading: isLoadingProducts } = useProducts(
     currentPage,
@@ -85,38 +89,70 @@ const Products = () => {
   const createProduct = useCreateProduct();
   const updateProduct = useUpdateProduct();
   const deleteProduct = useDeleteProduct();
-  const duplicateProduct = useDuplicateProduct();
+
+  const blankVariant = (): Omit<Variant, "id"> => ({
+    color: "",
+    size: "",
+    sku: "",
+    price: 0,
+    currency: "NGN",
+    stock: 0,
+    images: [],
+  });
 
   const handleAddVariant = () => {
-    if (currentVariant.color && currentVariant.size && currentVariant.sku) {
-      // Create new variant with id (since Variant type requires id)
-      const newVariant: Variant = {
-        ...currentVariant,
-        id: Date.now().toString(),
-        price: currentVariant.price * 100, // Convert to cents
-      };
-
-      setFormData({
-        ...formData,
-        variants: [...formData.variants, newVariant],
-      });
-
-      // Reset current variant (without id - using Omit<Variant, "id">)
-      setCurrentVariant({
-        color: "",
-        size: "",
-        sku: "",
-        price: 0,
-        currency: "NGN",
-        stock: 0,
-        images: [],
-      });
-    } else {
-      alert("Please fill in color, size, and SKU");
+    if (!currentVariant.color || !currentVariant.size || !currentVariant.sku) {
+      toast.error("Please fill in color, size, and SKU");
+      return;
     }
+    const newVariant: Variant = {
+      ...currentVariant,
+      id: Date.now().toString(),
+      price: currentVariant.price * 100,
+    };
+    setFormData({ ...formData, variants: [...formData.variants, newVariant] });
+    setCurrentVariant(blankVariant());
+  };
+
+  const handleEditVariant = (index: number) => {
+    const v = formData.variants[index];
+    setCurrentVariant({
+      color: v.color,
+      size: v.size,
+      sku: v.sku,
+      price: v.price / 100,
+      currency: v.currency || "NGN",
+      stock: v.stock,
+      images: v.images || [],
+    });
+    setEditingVariantIdx(index);
+  };
+
+  const handleUpdateVariant = () => {
+    if (!currentVariant.color || !currentVariant.size || !currentVariant.sku) {
+      toast.error("Please fill in color, size, and SKU");
+      return;
+    }
+    const updated = formData.variants.map((v, i) =>
+      i === editingVariantIdx
+        ? { ...v, ...currentVariant, price: currentVariant.price * 100 }
+        : v,
+    );
+    setFormData({ ...formData, variants: updated });
+    setEditingVariantIdx(-1);
+    setCurrentVariant(blankVariant());
+  };
+
+  const handleCancelEditVariant = () => {
+    setEditingVariantIdx(-1);
+    setCurrentVariant(blankVariant());
   };
 
   const handleRemoveVariant = (index: number) => {
+    if (editingVariantIdx === index) {
+      setEditingVariantIdx(-1);
+      setCurrentVariant(blankVariant());
+    }
     setFormData({
       ...formData,
       variants: formData.variants.filter((_, i) => i !== index),
@@ -149,10 +185,6 @@ const Products = () => {
     }
 
     closeModal();
-  };
-
-  const handleDuplicateProduct = (id: string) => {
-    duplicateProduct.mutate(id);
   };
 
   const handleDeleteProduct = () => {
@@ -241,8 +273,8 @@ const Products = () => {
             itemsPerPage={itemsPerPage}
             onPageChange={handlePageChange}
             onPerRowsChange={handlePerRowsChange}
+            onViewDetails={setViewingProduct}
             onEdit={handleEditProduct}
-            onDuplicate={handleDuplicateProduct}
             onDelete={setProductToDelete}
             isLoading={isLoadingProducts}
           />
@@ -254,9 +286,13 @@ const Products = () => {
           editingProduct={editingProduct}
           formData={formData}
           currentVariant={currentVariant}
+          editingVariantIndex={editingVariantIdx}
           onFormChange={setFormData}
           onVariantChange={setCurrentVariant}
           onAddVariant={handleAddVariant}
+          onEditVariant={handleEditVariant}
+          onUpdateVariant={handleUpdateVariant}
+          onCancelEditVariant={handleCancelEditVariant}
           onRemoveVariant={handleRemoveVariant}
           onClose={closeModal}
           onSave={handleSaveProduct}
@@ -270,6 +306,16 @@ const Products = () => {
           onClose={() => setProductToDelete(null)}
         />
       </div>
+
+      {/* Product Detail Drawer */}
+      <ProductDetailDrawer
+        product={viewingProduct}
+        onClose={() => setViewingProduct(null)}
+        onEdit={(product) => {
+          setViewingProduct(null);
+          handleEditProduct(product);
+        }}
+      />
     </DashboardLayout>
   );
 };

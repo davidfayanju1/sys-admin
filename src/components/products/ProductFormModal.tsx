@@ -19,9 +19,13 @@ interface ProductFormModalProps {
     variants: Variant[];
   };
   currentVariant: Omit<Variant, "id">;
+  editingVariantIndex: number;
   onFormChange: (data: any) => void;
   onVariantChange: (variant: Omit<Variant, "id">) => void;
   onAddVariant: () => void;
+  onEditVariant: (index: number) => void;
+  onUpdateVariant: () => void;
+  onCancelEditVariant: () => void;
   onRemoveVariant: (index: number) => void;
   onClose: () => void;
   onSave: () => void;
@@ -32,9 +36,13 @@ const ProductFormModal = ({
   editingProduct,
   formData,
   currentVariant,
+  editingVariantIndex,
   onFormChange,
   onVariantChange,
   onAddVariant,
+  onEditVariant,
+  onUpdateVariant,
+  onCancelEditVariant,
   onRemoveVariant,
   onClose,
   onSave,
@@ -163,9 +171,15 @@ const ProductFormModal = ({
                   variant={currentVariant}
                   onVariantChange={onVariantChange}
                   onAddVariant={onAddVariant}
+                  isEditing={editingVariantIndex >= 0}
+                  editingIndex={editingVariantIndex}
+                  onUpdateVariant={onUpdateVariant}
+                  onCancelEdit={onCancelEditVariant}
                 />
                 <VariantTable
                   variants={formData.variants || []}
+                  editingIndex={editingVariantIndex >= 0 ? editingVariantIndex : undefined}
+                  onEditVariant={onEditVariant}
                   onRemoveVariant={onRemoveVariant}
                 />
               </div>

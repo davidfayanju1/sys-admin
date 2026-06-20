@@ -1,5 +1,5 @@
 // components/products/ProductTable.tsx
-import { Edit, Copy, Trash2, Package, Eye } from "lucide-react";
+import { Edit, Trash2, Package, Eye, PanelRightOpen } from "lucide-react";
 import RowActionMenu from "../UI/RowActionMenu";
 import DataTableComponent, {
   type TableColumn,
@@ -16,8 +16,8 @@ interface ProductTableProps {
   itemsPerPage: number;
   onPageChange: (page: number) => void;
   onPerRowsChange: (rowsPerPage: number) => void;
+  onViewDetails: (product: Product) => void;
   onEdit: (product: Product) => void;
-  onDuplicate: (id: string) => void;
   onDelete: (product: Product) => void;
   isLoading?: boolean;
 }
@@ -29,8 +29,8 @@ const ProductTable = ({
   itemsPerPage,
   onPageChange,
   onPerRowsChange,
+  onViewDetails,
   onEdit,
-  onDuplicate,
   onDelete,
   isLoading,
 }: ProductTableProps) => {
@@ -200,8 +200,8 @@ const ProductTable = ({
       cell: (row: Product) => (
         <RowActionMenu
           actions={[
+            { icon: PanelRightOpen, label: "View Details", onClick: () => onViewDetails(row) },
             { icon: Edit, label: "Edit", onClick: () => onEdit(row) },
-            { icon: Copy, label: "Duplicate", onClick: () => onDuplicate(row.id || row._id) },
             { icon: Trash2, label: "Delete", onClick: () => onDelete(row), destructive: true },
           ]}
         />

@@ -1,13 +1,19 @@
-// components/products/VariantTable.tsx
-import { Trash2 } from "lucide-react";
+import { Trash2, Pencil } from "lucide-react";
 import type { Variant } from "../../types/product";
 
 interface VariantTableProps {
   variants: Variant[];
+  editingIndex?: number;
+  onEditVariant: (index: number) => void;
   onRemoveVariant: (index: number) => void;
 }
 
-const VariantTable = ({ variants, onRemoveVariant }: VariantTableProps) => {
+const VariantTable = ({
+  variants,
+  editingIndex,
+  onEditVariant,
+  onRemoveVariant,
+}: VariantTableProps) => {
   if (variants.length === 0) return null;
 
   return (
@@ -15,37 +21,58 @@ const VariantTable = ({ variants, onRemoveVariant }: VariantTableProps) => {
       <table className="w-full text-sm">
         <thead className="bg-gray-50">
           <tr>
-            <th className="px-3 py-2 text-left text-xs text-gray-500">Color</th>
-            <th className="px-3 py-2 text-left text-xs text-gray-500">Size</th>
-            <th className="px-3 py-2 text-left text-xs text-gray-500">SKU</th>
-            <th className="px-3 py-2 text-left text-xs text-gray-500">Price</th>
-            <th className="px-3 py-2 text-left text-xs text-gray-500">Stock</th>
-            <th className="px-3 py-2 text-center text-xs text-gray-500">
-              Action
-            </th>
+            <th className="px-3 py-2 text-left text-xs text-gray-500 font-normal">#</th>
+            <th className="px-3 py-2 text-left text-xs text-gray-500 font-normal">Color</th>
+            <th className="px-3 py-2 text-left text-xs text-gray-500 font-normal">Size</th>
+            <th className="px-3 py-2 text-left text-xs text-gray-500 font-normal">SKU</th>
+            <th className="px-3 py-2 text-left text-xs text-gray-500 font-normal">Price</th>
+            <th className="px-3 py-2 text-left text-xs text-gray-500 font-normal">Stock</th>
+            <th className="px-3 py-2 text-center text-xs text-gray-500 font-normal">Actions</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-100">
-          {variants.map((variant, idx) => (
-            <tr key={variant.id}>
-              <td className="px-3 py-2">{variant.color}</td>
-              <td className="px-3 py-2">{variant.size}</td>
-              <td className="px-3 py-2 font-mono text-xs">{variant.sku}</td>
-              <td className="px-3 py-2">
-                ₦
-                {(variant.price / 100).toFixed(2)}
-              </td>
-              <td className="px-3 py-2">{variant.stock}</td>
-              <td className="px-3 py-2 text-center">
-                <button
-                  onClick={() => onRemoveVariant(idx)}
-                  className="text-red-500 hover:text-red-700"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </td>
-            </tr>
-          ))}
+          {variants.map((variant, idx) => {
+            const isEditing = editingIndex === idx;
+            return (
+              <tr
+                key={variant.id || idx}
+                className={isEditing ? "bg-amber-50 border-l-2 border-l-amber-400" : ""}
+              >
+                <td className="px-3 py-2 text-xs text-gray-400">{idx + 1}</td>
+                <td className="px-3 py-2 text-xs">{variant.color}</td>
+                <td className="px-3 py-2">
+                  <span className="inline-flex px-1.5 py-0.5 bg-gray-100 text-[10px] font-medium text-gray-700">
+                    {variant.size}
+                  </span>
+                </td>
+                <td className="px-3 py-2 font-mono text-xs text-gray-500">{variant.sku}</td>
+                <td className="px-3 py-2 text-xs font-medium">
+                  ₦{(variant.price / 100).toLocaleString("en-NG", { minimumFractionDigits: 2 })}
+                </td>
+                <td className="px-3 py-2 text-xs text-gray-600">{variant.stock}</td>
+                <td className="px-3 py-2">
+                  <div className="flex items-center justify-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => onEditVariant(idx)}
+                      title="Edit variant"
+                      className={`transition ${isEditing ? "text-amber-500" : "text-gray-400 hover:text-black"}`}
+                    >
+                      <Pencil className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => onRemoveVariant(idx)}
+                      title="Remove variant"
+                      className="text-gray-400 hover:text-red-600 transition"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>
