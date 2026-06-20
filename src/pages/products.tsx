@@ -66,7 +66,7 @@ const Products = () => {
 
   const [currentVariant, setCurrentVariant] = useState<Omit<Variant, "id">>({
     color: "",
-    size: "",
+    sizes: [],
     sku: "",
     price: 0,
     currency: "NGN",
@@ -92,7 +92,7 @@ const Products = () => {
 
   const blankVariant = (): Omit<Variant, "id"> => ({
     color: "",
-    size: "",
+    sizes: [],
     sku: "",
     price: 0,
     currency: "NGN",
@@ -101,8 +101,8 @@ const Products = () => {
   });
 
   const handleAddVariant = () => {
-    if (!currentVariant.color || !currentVariant.size || !currentVariant.sku) {
-      toast.error("Please fill in color, size, and SKU");
+    if (!currentVariant.color || !(currentVariant.sizes || []).length || !currentVariant.sku) {
+      toast.error("Please fill in color, at least one size, and SKU");
       return;
     }
     const newVariant: Variant = {
@@ -118,7 +118,7 @@ const Products = () => {
     const v = formData.variants[index];
     setCurrentVariant({
       color: v.color,
-      size: v.size,
+      sizes: v.sizes && v.sizes.length > 0 ? v.sizes : [],
       sku: v.sku,
       price: v.price / 100,
       currency: v.currency || "NGN",
@@ -129,8 +129,8 @@ const Products = () => {
   };
 
   const handleUpdateVariant = () => {
-    if (!currentVariant.color || !currentVariant.size || !currentVariant.sku) {
-      toast.error("Please fill in color, size, and SKU");
+    if (!currentVariant.color || !(currentVariant.sizes || []).length || !currentVariant.sku) {
+      toast.error("Please fill in color, at least one size, and SKU");
       return;
     }
     const updated = formData.variants.map((v, i) =>
@@ -208,7 +208,7 @@ const Products = () => {
     });
     setCurrentVariant({
       color: "",
-      size: "",
+      sizes: [],
       sku: "",
       price: 0,
       currency: "NGN",

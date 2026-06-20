@@ -196,14 +196,14 @@ const ProductDetailDrawer = ({ product, onClose, onEdit }: Props) => {
                         <img
                           src={currentPrimary}
                           alt={product.name || product.title}
-                          className="w-full aspect-[4/3] object-cover bg-gray-100"
+                          className="w-full aspect-4/3 object-cover bg-gray-100"
                           onError={(e) => {
                             (e.target as HTMLImageElement).style.display =
                               "none";
                           }}
                         />
                       ) : (
-                        <ImagePlaceholder className="w-full aspect-[4/3]" />
+                        <ImagePlaceholder className="w-full aspect-4/3" />
                       )}
                     </div>
 
@@ -313,9 +313,13 @@ const ProductDetailDrawer = ({ product, onClose, onEdit }: Props) => {
                               {v.color}
                             </td>
                             <td className="px-3 py-2.5">
-                              <span className="px-1.5 py-0.5 bg-gray-100 text-[10px] font-medium text-gray-700">
-                                {v.size}
-                              </span>
+                              <div className="flex flex-wrap gap-1">
+                                {(v.sizes || []).map((s) => (
+                                  <span key={s} className="px-1.5 py-0.5 bg-gray-100 text-[10px] font-medium text-gray-700">
+                                    {s}
+                                  </span>
+                                ))}
+                              </div>
                             </td>
                             <td className="px-3 py-2.5 font-mono text-gray-500 text-[10px]">
                               {v.sku}

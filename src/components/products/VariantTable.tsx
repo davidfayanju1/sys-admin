@@ -41,9 +41,13 @@ const VariantTable = ({
                 <td className="px-3 py-2 text-xs text-gray-400">{idx + 1}</td>
                 <td className="px-3 py-2 text-xs">{variant.color}</td>
                 <td className="px-3 py-2">
-                  <span className="inline-flex px-1.5 py-0.5 bg-gray-100 text-[10px] font-medium text-gray-700">
-                    {variant.size}
-                  </span>
+                  <div className="flex flex-wrap gap-1">
+                    {(variant.sizes || []).map((s) => (
+                      <span key={s} className="inline-flex px-1.5 py-0.5 bg-gray-100 text-[10px] font-medium text-gray-700">
+                        {s}
+                      </span>
+                    ))}
+                  </div>
                 </td>
                 <td className="px-3 py-2 font-mono text-xs text-gray-500">{variant.sku}</td>
                 <td className="px-3 py-2 text-xs font-medium">

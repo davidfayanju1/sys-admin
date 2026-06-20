@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { PlusCircle, Wand2, X, ChevronDown, HelpCircle, Check } from "lucide-react";
+import { PlusCircle, Wand2, X, HelpCircle, Check } from "lucide-react";
 import type { Variant } from "../../types/product";
 
 export const SIZES = ["SM", "MD", "LG", "L", "XL", "2XL", "3XL"] as const;
@@ -14,9 +14,9 @@ const SIZE_GUIDE = [
   { size: "3XL", chest: "137–142", waist: "121–126", hips: "137–142"},
 ];
 
-const generateSKU = (color: string, size: string): string => {
+const generateSKU = (color: string, sizes: string[]): string => {
   const c = (color || "XXX").replace(/\s+/g, "").slice(0, 3).toUpperCase().padEnd(3, "X");
-  const s = (size || "XX").replace(/[^A-Z0-9]/gi, "").toUpperCase().slice(0, 3).padEnd(2, "X");
+  const s = sizes.length > 0 ? sizes[0].replace(/[^A-Z0-9]/gi, "").toUpperCase().slice(0, 3) : "XX";
   const rand = Math.random().toString(36).slice(2, 6).toUpperCase();
   return `${c}-${s}-${rand}`;
 };
@@ -45,6 +45,15 @@ const VariantForm = ({
   const inputCls =
     "w-full px-3 py-2 border border-gray-200 focus:border-black outline-none text-sm bg-white";
 
+  const selectedSizes = variant.sizes || [];
+
+  const toggleSize = (s: string) => {
+    const next = selectedSizes.includes(s)
+      ? selectedSizes.filter((x) => x !== s)
+      : [...selectedSizes, s];
+    onVariantChange({ ...variant, sizes: next });
+  };
+
   return (
     <div className="border border-gray-200 mb-4 overflow-visible">
       {/* Header */}
@@ -65,100 +74,112 @@ const VariantForm = ({
       </div>
 
       <div className="p-4 space-y-3">
-        {/* Row 1: Color + Size */}
-        <div className="grid grid-cols-2 gap-3">
-          {/* Color */}
-          <div>
-            <label className="block text-[10px] uppercase tracking-wider text-gray-400 mb-1">
-              Color
-            </label>
-            <input
-              type="text"
-              placeholder="e.g. Midnight Black"
-              value={variant.color}
-              onChange={(e) => onVariantChange({ ...variant, color: e.target.value })}
-              className={inputCls}
-            />
-          </div>
-
-          {/* Size */}
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <label className="text-[10px] uppercase tracking-wider text-gray-400">
-                Size
-              </label>
-              <button
-                type="button"
-                onClick={() => setShowGuide(!showGuide)}
-                className="flex items-center gap-1 text-[10px] text-gray-400 hover:text-black transition"
-              >
-                <HelpCircle className="w-3 h-3" />
-                Size Guide
-              </button>
-            </div>
-            <div className="relative">
-              <select
-                value={variant.size}
-                onChange={(e) => onVariantChange({ ...variant, size: e.target.value })}
-                className={`${inputCls} appearance-none pr-8 cursor-pointer`}
-              >
-                <option value="">Select size…</option>
-                {SIZES.map((s) => (
-                  <option key={s} value={s}>{s}</option>
-                ))}
-              </select>
-              <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
-            </div>
-          </div>
+        {/* Color */}
+        <div>
+          <label className="block text-[10px] uppercase tracking-wider text-gray-400 mb-1">
+            Color
+          </label>
+          <input
+            type="text"
+            placeholder="e.g. Midnight Black"
+            value={variant.color}
+            onChange={(e) => onVariantChange({ ...variant, color: e.target.value })}
+            className={inputCls}
+          />
         </div>
 
-        {/* Size Guide */}
-        {showGuide && (
-          <div className="border border-gray-200 bg-white">
-            <div className="flex items-center justify-between px-3 py-2 border-b border-gray-100 bg-gray-50">
-              <p className="text-[10px] uppercase tracking-wider font-medium text-gray-600">
-                Size Guide — Measurements in cm
-              </p>
-              <button
-                type="button"
-                onClick={() => setShowGuide(false)}
-                className="text-gray-400 hover:text-black transition"
-              >
-                <X className="w-3 h-3" />
-              </button>
-            </div>
-            <table className="w-full text-xs">
-              <thead>
-                <tr className="bg-gray-50">
-                  <th className="px-3 py-1.5 text-left text-gray-500 font-normal">Size</th>
-                  <th className="px-3 py-1.5 text-left text-gray-500 font-normal">Chest</th>
-                  <th className="px-3 py-1.5 text-left text-gray-500 font-normal">Waist</th>
-                  <th className="px-3 py-1.5 text-left text-gray-500 font-normal">Hips</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {SIZE_GUIDE.map((row) => (
-                  <tr
-                    key={row.size}
-                    className={variant.size === row.size ? "bg-black text-white" : "hover:bg-gray-50"}
-                  >
-                    <td className="px-3 py-1.5 font-medium">{row.size}</td>
-                    <td className="px-3 py-1.5">{row.chest}</td>
-                    <td className="px-3 py-1.5">{row.waist}</td>
-                    <td className="px-3 py-1.5">{row.hips}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            <p className="px-3 py-2 text-[9px] text-gray-400 border-t border-gray-100">
-              All measurements are approximate. Fit may vary by style.
-            </p>
+        {/* Sizes — multi-toggle */}
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <label className="text-[10px] uppercase tracking-wider text-gray-400">
+              Sizes
+              {selectedSizes.length > 0 && (
+                <span className="ml-1.5 text-black/50 normal-case tracking-normal">
+                  ({selectedSizes.join(", ")})
+                </span>
+              )}
+            </label>
+            <button
+              type="button"
+              onClick={() => setShowGuide(!showGuide)}
+              className="flex items-center gap-1 text-[10px] text-gray-400 hover:text-black transition"
+            >
+              <HelpCircle className="w-3 h-3" />
+              Size Guide
+            </button>
           </div>
-        )}
 
-        {/* Row 2: SKU + Price + Stock */}
+          <div className="flex flex-wrap gap-1.5">
+            {SIZES.map((s) => {
+              const active = selectedSizes.includes(s);
+              return (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => toggleSize(s)}
+                  className={`px-3 py-1.5 text-xs border transition select-none ${
+                    active
+                      ? "bg-black text-white border-black"
+                      : "border-gray-200 text-gray-700 hover:border-black"
+                  }`}
+                >
+                  {s}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Size Guide table */}
+          {showGuide && (
+            <div className="mt-2 border border-gray-200 bg-white">
+              <div className="flex items-center justify-between px-3 py-2 border-b border-gray-100 bg-gray-50">
+                <p className="text-[10px] uppercase tracking-wider font-medium text-gray-600">
+                  Size Guide — cm · click a row to select
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setShowGuide(false)}
+                  className="text-gray-400 hover:text-black transition"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="bg-gray-50">
+                    <th className="px-3 py-1.5 text-left text-gray-500 font-normal">Size</th>
+                    <th className="px-3 py-1.5 text-left text-gray-500 font-normal">Chest</th>
+                    <th className="px-3 py-1.5 text-left text-gray-500 font-normal">Waist</th>
+                    <th className="px-3 py-1.5 text-left text-gray-500 font-normal">Hips</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {SIZE_GUIDE.map((row) => {
+                    const active = selectedSizes.includes(row.size);
+                    return (
+                      <tr
+                        key={row.size}
+                        onClick={() => toggleSize(row.size)}
+                        className={`cursor-pointer ${active ? "bg-black text-white" : "hover:bg-gray-50"}`}
+                      >
+                        <td className="px-3 py-1.5 font-medium">{row.size}</td>
+                        <td className="px-3 py-1.5">{row.chest}</td>
+                        <td className="px-3 py-1.5">{row.waist}</td>
+                        <td className="px-3 py-1.5">{row.hips}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+              <p className="px-3 py-2 text-[9px] text-gray-400 border-t border-gray-100">
+                All measurements are approximate. Fit may vary by style.
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* SKU + Price + Stock */}
         <div className="grid grid-cols-3 gap-3">
-          {/* SKU */}
           <div>
             <label className="block text-[10px] uppercase tracking-wider text-gray-400 mb-1">
               SKU
@@ -177,7 +198,7 @@ const VariantForm = ({
                 onClick={() =>
                   onVariantChange({
                     ...variant,
-                    sku: generateSKU(variant.color, variant.size),
+                    sku: generateSKU(variant.color, selectedSizes),
                   })
                 }
                 className="px-2.5 border border-gray-200 bg-gray-50 hover:bg-black hover:text-white hover:border-black transition text-gray-500 shrink-0"
@@ -187,7 +208,6 @@ const VariantForm = ({
             </div>
           </div>
 
-          {/* Price */}
           <div>
             <label className="block text-[10px] uppercase tracking-wider text-gray-400 mb-1">
               Price (₦)
@@ -204,7 +224,6 @@ const VariantForm = ({
             />
           </div>
 
-          {/* Stock */}
           <div>
             <label className="block text-[10px] uppercase tracking-wider text-gray-400 mb-1">
               Stock
@@ -222,7 +241,7 @@ const VariantForm = ({
           </div>
         </div>
 
-        {/* Action button */}
+        {/* Action */}
         <div className="flex justify-end pt-1">
           {isEditing ? (
             <div className="flex gap-2">

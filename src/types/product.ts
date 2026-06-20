@@ -9,7 +9,7 @@ export interface Color {
 export interface Variant {
   id: string;
   color: string;
-  size: string;
+  sizes: string[];
   sku: string;
   price: number;
   currency: string;

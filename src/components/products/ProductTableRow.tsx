@@ -57,7 +57,7 @@ const ProductTableRow = ({
 
   const getVariantSummary = (variants: Product["variants"]) => {
     const colors = [...new Set(variants.map((v) => v.color))];
-    const sizes = [...new Set(variants.map((v) => v.size))];
+    const sizes = [...new Set(variants.flatMap((v) => v.sizes || []))];
     return `${colors.length} color${colors.length !== 1 ? "s" : ""} • ${sizes.length} size${sizes.length !== 1 ? "s" : ""}`;
   };
 
