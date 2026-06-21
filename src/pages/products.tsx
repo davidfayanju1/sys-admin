@@ -101,7 +101,11 @@ const Products = () => {
   });
 
   const handleAddVariant = () => {
-    if (!currentVariant.color || !(currentVariant.sizes || []).length || !currentVariant.sku) {
+    if (
+      !currentVariant.color ||
+      !(currentVariant.sizes || []).length ||
+      !currentVariant.sku
+    ) {
       toast.error("Please fill in color, at least one size, and SKU");
       return;
     }
@@ -129,7 +133,11 @@ const Products = () => {
   };
 
   const handleUpdateVariant = () => {
-    if (!currentVariant.color || !(currentVariant.sizes || []).length || !currentVariant.sku) {
+    if (
+      !currentVariant.color ||
+      !(currentVariant.sizes || []).length ||
+      !currentVariant.sku
+    ) {
       toast.error("Please fill in color, at least one size, and SKU");
       return;
     }
@@ -235,7 +243,7 @@ const Products = () => {
             <h1 className="text-2xl font-light tracking-tight">Products</h1>
             <div className="w-12 h-px bg-black/10 mt-2" />
             <p className="text-xs text-gray-500 mt-3">
-              Manage your product catalog, variants, and inventory
+              Manage RTW product catalog, variants, and inventory
             </p>
           </div>
           <button

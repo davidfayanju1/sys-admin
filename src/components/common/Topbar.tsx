@@ -34,8 +34,16 @@ const Topbar = () => {
                   {user?.role || "Current Role"}
                 </p>
               </div>
-              <div className="w-7 h-7 md:w-8 md:h-8 border border-black/20 rounded-full flex items-center justify-center hover:bg-black/5 transition-colors">
-                <User className="w-3.5 h-3.5 text-black/60" />
+              <div className="w-7 h-7 md:w-8 md:h-8 border border-black/20 rounded-full overflow-hidden flex items-center justify-center hover:bg-black/5 transition-colors">
+                {user?.avatar ? (
+                  <img
+                    src={user.avatar}
+                    alt={user.fullName}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <User className="w-3.5 h-3.5 text-black/60" />
+                )}
               </div>
             </div>
           </Link>

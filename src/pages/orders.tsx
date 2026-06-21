@@ -1,4 +1,4 @@
-// pages/Orders.tsx - With sharp corners (your brand style)
+// pages/Orders.tsx
 import { useState, useMemo } from "react";
 import DashboardLayout from "../layout/DashboardLayout";
 import {
@@ -11,6 +11,7 @@ import {
   Download,
   ShoppingBag,
   Eye,
+  Filter,
 } from "lucide-react";
 import DataTableComponent, {
   type TableColumn,
@@ -22,47 +23,56 @@ import { useOrders, useOrderSummary, type Order } from "../hooks/useOrders";
 import OrderDetailsModal from "../components/orders/OrderDetailsModal";
 import StatCard from "../components/UI/StatCard";
 import { TableSkeleton } from "../components/skeleton-loaders/OrderDetailsModalSkeleton";
+import { AnimatePresence } from "framer-motion";
 
 const DataTable = (DataTableComponent as any).default || DataTableComponent;
+
+const STATUS_FILTERS = [
+  { label: "All Orders", value: "all" },
+  { label: "Pending", value: "pending" },
+  { label: "Processing", value: "processing" },
+  { label: "Shipped", value: "shipped" },
+  { label: "Delivered", value: "delivered" },
+  { label: "Cancelled", value: "cancelled" },
+];
+
 const StatusBadge = ({ status }: { status: string }) => {
-  const config: Record<
-    string,
-    { icon: any; label: string; className: string }
-  > = {
-    pending: {
+  const config: Record<string, { icon: any; label: string; className: string }> =
+    {
+      pending: {
+        icon: Clock,
+        label: "Pending",
+        className: "bg-yellow-100 text-yellow-700",
+      },
+      processing: {
+        icon: Package,
+        label: "Processing",
+        className: "bg-blue-100 text-blue-700",
+      },
+      shipped: {
+        icon: Truck,
+        label: "Shipped",
+        className: "bg-purple-100 text-purple-700",
+      },
+      delivered: {
+        icon: CheckCircle,
+        label: "Delivered",
+        className: "bg-green-100 text-green-700",
+      },
+      cancelled: {
+        icon: XCircle,
+        label: "Cancelled",
+        className: "bg-red-100 text-red-700",
+      },
+    };
+
+  const { icon: Icon, label, className } =
+    config[status.toLowerCase()] || {
       icon: Clock,
-      label: "Pending",
-      className: "bg-yellow-100 text-yellow-700",
-    },
-    processing: {
-      icon: Package,
-      label: "Processing",
-      className: "bg-blue-100 text-blue-700",
-    },
-    shipped: {
-      icon: Truck,
-      label: "Shipped",
-      className: "bg-purple-100 text-purple-700",
-    },
-    delivered: {
-      icon: CheckCircle,
-      label: "Delivered",
-      className: "bg-green-100 text-green-700",
-    },
-    cancelled: {
-      icon: XCircle,
-      label: "Cancelled",
-      className: "bg-red-100 text-red-700",
-    },
-  };
+      label: status,
+      className: "bg-gray-100 text-gray-700",
+    };
 
-  const statusConfig = config[status.toLowerCase()] || {
-    icon: Clock,
-    label: status,
-    className: "bg-gray-100 text-gray-700",
-  };
-
-  const { icon: Icon, label, className } = statusConfig;
   return (
     <span
       className={`inline-flex items-center gap-1 px-2 py-1 text-[9px] uppercase tracking-wide font-medium ${className}`}
@@ -78,10 +88,10 @@ const PaymentBadge = ({ status }: { status: string }) => {
     paid: "bg-green-100 text-green-700",
     pending: "bg-yellow-100 text-yellow-700",
     failed: "bg-red-100 text-red-700",
+    refunded: "bg-gray-100 text-gray-600",
   };
-
-  const className = config[status.toLowerCase()] || "bg-gray-100 text-gray-700";
-
+  const className =
+    config[status.toLowerCase()] || "bg-gray-100 text-gray-700";
   return (
     <span
       className={`inline-flex px-2 py-1 text-[9px] uppercase tracking-wide font-medium ${className}`}
@@ -91,14 +101,8 @@ const PaymentBadge = ({ status }: { status: string }) => {
   );
 };
 
-// Custom styles for DataTable
 const customStyles = {
-  table: {
-    style: {
-      backgroundColor: "transparent",
-      borderRadius: "0px",
-    },
-  },
+  table: { style: { backgroundColor: "transparent", borderRadius: "0px" } },
   headRow: {
     style: {
       backgroundColor: "rgba(0, 0, 0, 0.03)",
@@ -122,17 +126,11 @@ const customStyles = {
     style: {
       minHeight: "48px",
       borderBottom: "1px solid rgba(0, 0, 0, 0.04)",
-      "&:hover": {
-        backgroundColor: "rgba(0, 0, 0, 0.02)",
-      },
       transition: "background-color 0.15s ease",
     },
   },
   cells: {
-    style: {
-      paddingLeft: "16px",
-      paddingRight: "16px",
-    },
+    style: { paddingLeft: "16px", paddingRight: "16px" },
   },
   pagination: {
     style: {
@@ -154,10 +152,7 @@ const customStyles = {
         backgroundColor: "rgba(0, 0, 0, 0.04)",
         fill: "rgba(0, 0, 0, 0.8)",
       },
-      "&:disabled": {
-        cursor: "default",
-        fill: "rgba(0, 0, 0, 0.15)",
-      },
+      "&:disabled": { cursor: "default", fill: "rgba(0, 0, 0, 0.15)" },
     },
   },
   noData: {
@@ -173,20 +168,20 @@ const customStyles = {
 const Orders = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [searchInput, setSearchInput] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(20);
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
 
-  // Fetch orders from API
   const { data: ordersResponse, isLoading: ordersLoading } = useOrders(
     currentPage,
     rowsPerPage,
     searchTerm,
+    statusFilter,
   );
   const orders = ordersResponse?.data || [];
   const meta = ordersResponse?.meta || { total: 0 };
 
-  // Fetch summary stats
   const { data: summaryResponse, isLoading: summaryLoading } =
     useOrderSummary();
   const summary = summaryResponse?.data || {
@@ -205,6 +200,11 @@ const Orders = () => {
     setCurrentPage(1);
   };
 
+  const handleStatusFilter = (value: string) => {
+    setStatusFilter(value);
+    setCurrentPage(1);
+  };
+
   const columns: TableColumn<Order>[] = useMemo(
     () => [
       {
@@ -219,12 +219,14 @@ const Orders = () => {
       },
       {
         name: "Order ID",
-        selector: (row) => row.id,
+        selector: (row) => row._id || row.id,
         sortable: true,
+        width: "160px",
         cell: (row) => (
-          <span className="text-xs text-black/70 font-light">{row.id}</span>
+          <span className="text-[10px] font-mono text-black/50 truncate">
+            {row.orderNumber || row._id || row.id}
+          </span>
         ),
-        width: "150px",
       },
       {
         name: "Customer",
@@ -232,7 +234,7 @@ const Orders = () => {
         sortable: true,
         cell: (row) => (
           <span className="text-xs text-black/70 font-light">
-            {row.customer}
+            {row.customer || "—"}
           </span>
         ),
       },
@@ -240,9 +242,16 @@ const Orders = () => {
         name: "Date",
         selector: (row) => row.date,
         sortable: true,
+        width: "110px",
         cell: (row) => (
           <span className="text-xs text-black/50 font-light">
-            {new Date(row.date).toLocaleDateString()}
+            {row.date
+              ? new Date(row.date).toLocaleDateString("en-GB", {
+                  day: "2-digit",
+                  month: "short",
+                  year: "numeric",
+                })
+              : "—"}
           </span>
         ),
       },
@@ -251,10 +260,10 @@ const Orders = () => {
         selector: (row) => row.items,
         sortable: true,
         center: true,
+        width: "70px",
         cell: (row) => (
-          <span className="text-xs text-black/50 font-light">{row.items}</span>
+          <span className="text-xs text-black/50 font-light">{row.items ?? "—"}</span>
         ),
-        width: "80px",
       },
       {
         name: "Amount",
@@ -264,7 +273,7 @@ const Orders = () => {
         cell: (row) => (
           <span className="text-xs font-medium text-black">
             ₦
-            {Number(row.amount).toLocaleString(undefined, {
+            {Number(row.amount).toLocaleString("en-NG", {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
             })}
@@ -290,7 +299,11 @@ const Orders = () => {
         cell: (row) => (
           <RowActionMenu
             actions={[
-              { icon: Eye, label: "View Details", onClick: () => setSelectedOrderId(row._id) },
+              {
+                icon: Eye,
+                label: "View Details",
+                onClick: () => setSelectedOrderId(row._id || row.id),
+              },
             ]}
           />
         ),
@@ -301,48 +314,46 @@ const Orders = () => {
 
   const handleExport = () => {
     if (!orders.length) return;
-
     const doc = new jsPDF();
-
-    const headers = [
-      "Order ID",
-      "Customer",
-      "Date",
-      "Items",
-      "Amount (Naira)",
-      "Status",
-      "Payment",
-    ];
-
-    const rows = orders.map((order) => [
-      order.id,
-      order.customer,
-      new Date(order.date).toLocaleDateString(),
-      order.items,
-      "₦" + Number(order.amount).toLocaleString(undefined, {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      }),
-      order.status,
-      order.paymentStatus,
-    ]);
-
     doc.setFontSize(16);
     doc.text("Orders Report", 14, 15);
     doc.setFontSize(10);
-    doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 22);
+    doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 22);
+    if (statusFilter !== "all") {
+      doc.text(`Filter: ${statusFilter}`, 14, 28);
+    }
 
     autoTable(doc, {
-      startY: 28,
-      head: [headers],
-      body: rows,
+      startY: statusFilter !== "all" ? 34 : 28,
+      head: [
+        ["Order ID", "Customer", "Date", "Items", "Amount (₦)", "Status", "Payment"],
+      ],
+      body: orders.map((o) => [
+        o.orderNumber || o._id || o.id,
+        o.customer || "—",
+        o.date
+          ? new Date(o.date).toLocaleDateString("en-GB", {
+              day: "2-digit",
+              month: "short",
+              year: "numeric",
+            })
+          : "—",
+        o.items ?? "—",
+        "₦" +
+          Number(o.amount).toLocaleString("en-NG", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          }),
+        o.status,
+        o.paymentStatus,
+      ]),
       theme: "grid",
       styles: { fontSize: 8, cellPadding: 3 },
       headStyles: { fillColor: [20, 20, 20], textColor: [255, 255, 255] },
       alternateRowStyles: { fillColor: [250, 250, 250] },
     });
 
-    doc.save(`orders_export_${new Date().getTime()}.pdf`);
+    doc.save(`orders_${statusFilter}_${new Date().getTime()}.pdf`);
   };
 
   return (
@@ -359,18 +370,16 @@ const Orders = () => {
               Manage and track all customer orders
             </p>
           </div>
-          <div className="flex gap-3">
-            <button
-              onClick={handleExport}
-              className="flex items-center gap-2 px-4 py-2 bg-black border border-black/10 hover:border-black transition text-sm text-black/70 hover:text-black"
-            >
-              <Download className="w-4 h-4" color="white" />
-              <span className="font-light text-white">Export</span>
-            </button>
-          </div>
+          <button
+            onClick={handleExport}
+            className="flex items-center gap-2 px-4 py-2 bg-black hover:bg-black/90 transition text-sm self-start sm:self-auto"
+          >
+            <Download className="w-4 h-4 text-white" />
+            <span className="font-light text-white">Export PDF</span>
+          </button>
         </div>
 
-        {/* Stats Summary */}
+        {/* Stats */}
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
           <StatCard
             icon={ShoppingBag}
@@ -408,22 +417,56 @@ const Orders = () => {
           />
         </div>
 
-        {/* Search Bar */}
-        <div className="flex justify-between items-center bg-white border border-black/10 p-4">
+        {/* Search + Filters */}
+        <div className="bg-white border border-black/10 p-4 flex flex-col sm:flex-row gap-3 items-start sm:items-center justify-between">
           <form onSubmit={handleSearch} className="relative max-w-sm w-full">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-black/30" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-black/30" />
             <input
               type="text"
-              placeholder="Search by customer or order ID..."
+              placeholder="Search by customer or order ID…"
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-black/10 focus:outline-none focus:border-black/30 transition-colors text-sm font-light bg-transparent"
             />
             <button type="submit" className="hidden" />
           </form>
+
+          {/* Status filter tabs */}
+          <div className="flex items-center gap-1 flex-wrap">
+            <Filter className="w-3.5 h-3.5 text-black/30 mr-1 shrink-0" />
+            {STATUS_FILTERS.map((f) => (
+              <button
+                key={f.value}
+                onClick={() => handleStatusFilter(f.value)}
+                className={`px-3 py-1.5 text-[10px] uppercase tracking-wider transition-colors ${
+                  statusFilter === f.value
+                    ? "bg-black text-white"
+                    : "bg-black/5 text-black/50 hover:bg-black/10"
+                }`}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
         </div>
 
-        {/* Data Table */}
+        {/* Active filter indicator */}
+        {statusFilter !== "all" && (
+          <div className="flex items-center gap-2 text-xs text-black/50">
+            <span>Showing:</span>
+            <span className="px-2 py-0.5 bg-black/5 text-black/70 uppercase tracking-wider text-[10px]">
+              {statusFilter}
+            </span>
+            <button
+              onClick={() => handleStatusFilter("all")}
+              className="text-black/30 hover:text-black/60 underline transition-colors"
+            >
+              Clear
+            </button>
+          </div>
+        )}
+
+        {/* Table */}
         <div className="bg-white border border-black/10">
           {ordersLoading ? (
             <TableSkeleton />
@@ -448,7 +491,9 @@ const Orders = () => {
               noDataComponent={
                 <div className="py-12 text-center">
                   <p className="text-xs text-black/40 tracking-wide">
-                    No orders found matching your criteria.
+                    {statusFilter !== "all"
+                      ? `No ${statusFilter} orders found.`
+                      : "No orders found matching your criteria."}
                   </p>
                 </div>
               }
@@ -457,12 +502,15 @@ const Orders = () => {
         </div>
       </div>
 
-      {selectedOrderId && (
-        <OrderDetailsModal
-          orderId={selectedOrderId}
-          onClose={() => setSelectedOrderId(null)}
-        />
-      )}
+      {/* Order Details Drawer */}
+      <AnimatePresence>
+        {selectedOrderId && (
+          <OrderDetailsModal
+            orderId={selectedOrderId}
+            onClose={() => setSelectedOrderId(null)}
+          />
+        )}
+      </AnimatePresence>
     </DashboardLayout>
   );
 };

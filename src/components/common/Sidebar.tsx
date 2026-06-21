@@ -15,7 +15,6 @@ import {
   BriefcaseBusiness,
   CalendarClock,
   MessageSquare,
-  Inbox,
   Layers,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -99,12 +98,12 @@ const Sidebar = () => {
           path: "/feedback",
           active: location.pathname === "/feedback",
         },
-        {
-          icon: Inbox,
-          label: "Messages",
-          path: "/messages",
-          active: location.pathname === "/messages",
-        },
+        // {
+        //   icon: Inbox,
+        //   label: "Messages",
+        //   path: "/messages",
+        //   active: location.pathname === "/messages",
+        // },
       ],
     },
     {

@@ -75,16 +75,11 @@ const ProductTable = ({
 
   const getPriceDisplay = (product: Product) => {
     if (product.variants && product.variants.length > 0) {
-      const prices = product.variants.map((v) => v.price / 100);
-      const min = Math.min(...prices);
-      const max = Math.max(...prices);
-      return min === max
-        ? `₦${min.toFixed(2)}`
-        : `₦${min.toFixed(2)} - ₦${max.toFixed(2)}`;
+      const min = Math.min(...product.variants.map((v) => v.price / 100));
+      return `₦${min.toLocaleString("en-NG", { minimumFractionDigits: 2 })}`;
     }
-    const currency = "₦";
     const price = (product.finalPrice || product.price) / 100;
-    return `${currency}${price.toFixed(2)}`;
+    return `₦${price.toLocaleString("en-NG", { minimumFractionDigits: 2 })}`;
   };
 
   const getVariantSummary = (product: Product) => {

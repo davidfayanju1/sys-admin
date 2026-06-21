@@ -19,13 +19,13 @@ const ProductStats = ({ summary, isLoading }: ProductStatsProps) => {
       label: "Active",
       value: summary?.active || 0,
       icon: ShoppingBag,
-      color: "text-green-600",
+      color: "text-gray-600",
     },
     {
       label: "Total Variants",
       value: summary?.totalVariants || 0,
       icon: Layers,
-      color: "text-blue-600",
+      color: "text-gray-600",
     },
     {
       label: "Low Stock (<5)",
@@ -52,7 +52,7 @@ const ProductStats = ({ summary, isLoading }: ProductStatsProps) => {
   }
 
   return (
-    <div className="grid grid-cols-4 gap-3">
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
       {stats.map((stat) => {
         const Icon = stat.icon;
         return (

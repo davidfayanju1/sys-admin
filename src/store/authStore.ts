@@ -14,6 +14,7 @@ export interface User {
   updatedAt: string;
   fullName: string;
   id: string;
+  avatar?: string;
 }
 
 interface AuthState {

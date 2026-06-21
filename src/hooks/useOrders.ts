@@ -1,15 +1,105 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "../lib/axios";
 
+export interface OrderItem {
+  _id?: string;
+  product?: {
+    _id?: string;
+    name?: string;
+    title?: string;
+    sku?: string;
+    images?: Array<{ url: string; isPrimary?: boolean } | string>;
+  };
+  variant?: {
+    color?: string;
+    size?: string;
+    sizes?: string[];
+    sku?: string;
+  };
+  name?: string;
+  sku?: string;
+  color?: string;
+  size?: string;
+  quantity: number;
+  unitPrice?: number;
+  price?: number;
+  subtotal?: number;
+  amount?: number;
+}
+
+export interface OrderAddress {
+  street?: string;
+  address?: string;
+  line1?: string;
+  line2?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  postalCode?: string;
+  zipCode?: string;
+}
+
+export interface StatusHistoryEntry {
+  status: string;
+  timestamp: string;
+  note?: string;
+  updatedBy?: string;
+}
+
+export interface OrderDetail {
+  _id: string;
+  id?: string;
+  orderNumber?: string;
+  customer?: string;
+  user?: {
+    _id?: string;
+    name?: string;
+    fullName?: string;
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+    phone?: string;
+  };
+  shippingAddress?: OrderAddress;
+  billingAddress?: OrderAddress;
+  items?: OrderItem[];
+  orderItems?: OrderItem[];
+  subtotal?: number;
+  shippingFee?: number;
+  shippingCost?: number;
+  discount?: number;
+  discountAmount?: number;
+  amount?: number;
+  totalPrice?: number;
+  total?: number;
+  currency?: string;
+  paymentMethod?: string;
+  paymentReference?: string;
+  paymentProvider?: string;
+  trackingNumber?: string;
+  carrier?: string;
+  estimatedDelivery?: string;
+  notes?: string;
+  adminNotes?: string;
+  status: string;
+  paymentStatus: string;
+  date?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  statusHistory?: StatusHistoryEntry[];
+}
+
 export interface Order {
   id: string;
+  _id: string;
+  orderNumber?: string;
   customer: string;
   date: string;
   amount: number;
+  currency?: string;
   status: "pending" | "processing" | "shipped" | "delivered" | "cancelled";
-  paymentStatus: "paid" | "pending" | "failed";
+  paymentStatus: "paid" | "pending" | "failed" | "refunded";
   items: number;
-  _id: string;
 }
 
 export interface OrdersResponse {
@@ -30,15 +120,16 @@ export const useOrders = (
   page: number = 1,
   limit: number = 10,
   search: string = "",
+  status: string = "",
 ) => {
   return useQuery({
-    queryKey: ["orders", page, limit, search],
+    queryKey: ["orders", page, limit, search, status],
     queryFn: async (): Promise<OrdersResponse> => {
-      // Pass search query if it's supported, or just page/limit
       const params = new URLSearchParams({
         page: page.toString(),
         limit: limit.toString(),
         ...(search ? { search } : {}),
+        ...(status && status !== "all" ? { status } : {}),
       });
       const response = await api.get(`/orders?${params.toString()}`);
       return response.data;
@@ -73,7 +164,7 @@ export const useOrderSummary = () => {
 export const useOrderDetails = (orderId: string | null) => {
   return useQuery({
     queryKey: ["order", orderId],
-    queryFn: async () => {
+    queryFn: async (): Promise<{ data: OrderDetail }> => {
       const response = await api.get(`/orders/${orderId}`);
       return response.data;
     },
@@ -99,8 +190,16 @@ export const useUpdateOrderStatus = () => {
 export const useUpdateOrderPayment = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ id, paymentStatus }: { id: string; paymentStatus: string }) => {
-      const response = await api.patch(`/orders/${id}/payment`, { paymentStatus });
+    mutationFn: async ({
+      id,
+      paymentStatus,
+    }: {
+      id: string;
+      paymentStatus: string;
+    }) => {
+      const response = await api.patch(`/orders/${id}/payment`, {
+        paymentStatus,
+      });
       return response.data;
     },
     onSuccess: (_, variables) => {
