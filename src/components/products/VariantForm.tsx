@@ -45,7 +45,7 @@ const VariantForm = ({
   const inputCls =
     "w-full px-3 py-2 border border-gray-200 focus:border-black outline-none text-sm bg-white";
 
-  const selectedSizes = variant.sizes || [];
+  const selectedSizes = (variant.sizes as string[]) || [];
 
   const toggleSize = (s: string) => {
     const next = selectedSizes.includes(s)

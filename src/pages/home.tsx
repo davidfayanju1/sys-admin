@@ -80,7 +80,7 @@ const Home = () => {
             </h1>
             <div className="w-12 h-px bg-black/10 mt-2" />
             <p className="text-xs text-black/50 mt-3">
-              Welcome back, {user?.firstName || "Admin"}! Here's your brand
+              Welcome back, {user?.firstName || "Admin"}! Here's your
               performance overview
             </p>
           </div>

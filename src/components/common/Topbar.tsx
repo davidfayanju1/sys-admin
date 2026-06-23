@@ -11,6 +11,8 @@ const Topbar = () => {
     window.dispatchEvent(event);
   };
 
+  console.log(user, "Current user");
+
   return (
     <>
       <header className="border-b border-black/10 h-20 px-4 sm:px-6 md:px-8 flex items-center justify-between">

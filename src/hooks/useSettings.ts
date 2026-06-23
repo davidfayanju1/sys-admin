@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { settingsService } from "../services/settingsService";
 import { toast } from "sonner";
 import type { ChangePasswordPayload, SettingsData } from "../types/settings";
+import { useAuthStore } from "../store/authStore";
 
 export const useSettings = () => {
   return useQuery({
@@ -14,6 +15,7 @@ export const useSettings = () => {
 
 export const useUpdateSettings = () => {
   const queryClient = useQueryClient();
+  const { user, setUser } = useAuthStore();
 
   return useMutation({
     mutationFn: (data: Partial<SettingsData>) =>
@@ -21,6 +23,15 @@ export const useUpdateSettings = () => {
     onSuccess: (data) => {
       queryClient.setQueryData(["settings"], data);
       queryClient.invalidateQueries({ queryKey: ["settings"] });
+      // Keep the auth store in sync so the Topbar avatar updates immediately
+      if (data.profile && user) {
+        setUser({
+          ...user,
+          avatar: data.profile.avatar ?? user.avatar,
+          firstName: data.profile.firstName || user.firstName,
+          lastName: data.profile.lastName || user.lastName,
+        });
+      }
       toast.success("Settings saved successfully");
     },
     onError: (error: any) => {

@@ -3,6 +3,7 @@ import DataTableComponent, { type TableColumn } from "react-data-table-component
 const DataTable = (DataTableComponent as any).default || DataTableComponent;
 import { Trash2, Pencil } from "lucide-react";
 import type { Variant } from "../../types/product";
+import { getVariantSizeNames, getVariantStock, getVariantMinPrice } from "../../types/product";
 
 interface VariantTableProps {
   variants: Variant[];
@@ -72,7 +73,7 @@ const VariantTable = ({
       name: "Size",
       cell: (row) => (
         <div className="flex flex-wrap gap-1 py-1">
-          {(row.sizes || []).map((s) => (
+          {getVariantSizeNames(row).map((s) => (
             <span
               key={s}
               className="inline-flex px-1.5 py-0.5 bg-gray-100 text-[10px] font-medium text-gray-700"
@@ -85,24 +86,24 @@ const VariantTable = ({
     },
     {
       name: "SKU",
-      selector: (row) => row.sku,
+      selector: (row) => row.sku || "",
       cell: (row) => (
-        <span className="font-mono text-xs text-gray-500">{row.sku}</span>
+        <span className="font-mono text-xs text-gray-500">{row.sku || ""}</span>
       ),
     },
     {
       name: "Price",
-      selector: (row) => row.price,
+      selector: (row) => getVariantMinPrice(row),
       cell: (row) => (
         <span className="text-xs font-medium">
-          ₦{(row.price / 100).toLocaleString("en-NG", { minimumFractionDigits: 2 })}
+          ₦{(getVariantMinPrice(row) / 100).toLocaleString("en-NG", { minimumFractionDigits: 2 })}
         </span>
       ),
     },
     {
       name: "Stock",
-      selector: (row) => row.stock,
-      cell: (row) => <span className="text-xs text-gray-600">{row.stock}</span>,
+      selector: (row) => getVariantStock(row),
+      cell: (row) => <span className="text-xs text-gray-600">{getVariantStock(row)}</span>,
     },
     {
       name: "Actions",

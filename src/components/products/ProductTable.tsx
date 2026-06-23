@@ -5,6 +5,7 @@ import DataTableComponent, {
   type TableColumn,
 } from "react-data-table-component";
 import type { Product } from "../../types/product";
+import { getVariantSizeNames, getVariantStock, getVariantMinPrice } from "../../types/product";
 
 // Use the same pattern as Orders.tsx
 const DataTable = (DataTableComponent as any).default || DataTableComponent;
@@ -68,17 +69,17 @@ const ProductTable = ({
 
   const getTotalStock = (product: Product) => {
     if (product.variants && product.variants.length > 0) {
-      return product.variants.reduce((sum, v) => sum + (v.stock || 0), 0);
+      return product.variants.reduce((sum, v) => sum + getVariantStock(v), 0);
     }
     return product.stock || 0;
   };
 
   const getPriceDisplay = (product: Product) => {
     if (product.variants && product.variants.length > 0) {
-      const min = Math.min(...product.variants.map((v) => v.price / 100));
+      const min = Math.min(...product.variants.map((v) => getVariantMinPrice(v) / 100));
       return `₦${min.toLocaleString("en-NG", { minimumFractionDigits: 2 })}`;
     }
-    const price = (product.finalPrice || product.price) / 100;
+    const price = product.finalPrice || product.price;
     return `₦${price.toLocaleString("en-NG", { minimumFractionDigits: 2 })}`;
   };
 
@@ -87,7 +88,7 @@ const ProductTable = ({
       return "No variants";
     }
     const colors = [...new Set(product.variants.map((v) => v.color))];
-    const sizes = [...new Set(product.variants.flatMap((v) => v.sizes || []))];
+    const sizes = [...new Set(product.variants.flatMap((v) => getVariantSizeNames(v)))];
     return `${colors.length} color${colors.length !== 1 ? "s" : ""} • ${sizes.length} size${sizes.length !== 1 ? "s" : ""}`;
   };
 

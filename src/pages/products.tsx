@@ -17,14 +17,33 @@ import ProductFormModal from "../components/products/ProductFormModal";
 import DeleteConfirmModal from "../components/products/DeleteConfirmModal";
 import ProductDetailDrawer from "../components/products/ProductDetailDrawer";
 import type { Product, Variant } from "../types/product";
+import { isSizeEntryArray, getVariantSku, getVariantStock, getVariantSizeNames } from "../types/product";
+
+// Converts a new-format API variant (sizes: SizeEntry[]) to the flat form format
+const normalizeVariantForForm = (v: Variant): Variant => {
+  if (!v.sizes || !isSizeEntryArray(v.sizes)) return v;
+  const firstSize = v.sizes[0];
+  return {
+    id: v.id,
+    _id: v._id,
+    color: v.color,
+    sizes: getVariantSizeNames(v),
+    sku: getVariantSku(v),
+    price: firstSize?.price || 0,
+    currency: firstSize?.currency || "NGN",
+    stock: getVariantStock(v),
+    images: v.images || [],
+    reorderLevel: firstSize?.reorderLevel,
+    reorderQuantity: firstSize?.reorderQuantity,
+    location: firstSize?.location,
+    reservedStock: firstSize?.reservedStock || 0,
+  };
+};
 
 // Helper function to transform API product to form data
 const transformProductToFormData = (product: Product) => {
-  // Get primary image from images array
   const primaryImageObj = product.images?.find((img) => img.isPrimary);
   const primaryImage = primaryImageObj?.url || product.images?.[0]?.url || "";
-
-  // Get secondary images (non-primary)
   const secondaryImages =
     product.images?.filter((img) => !img.isPrimary).map((img) => img.url) || [];
 
@@ -36,9 +55,9 @@ const transformProductToFormData = (product: Product) => {
       | "active"
       | "draft"
       | "archived",
-    primaryImage: primaryImage,
-    secondaryImages: secondaryImages,
-    variants: product.variants || [],
+    primaryImage,
+    secondaryImages,
+    variants: (product.variants || []).map(normalizeVariantForForm),
   };
 };
 
@@ -112,7 +131,7 @@ const Products = () => {
     const newVariant: Variant = {
       ...currentVariant,
       id: Date.now().toString(),
-      price: currentVariant.price * 100,
+      price: (currentVariant.price || 0) * 100,
     };
     setFormData({ ...formData, variants: [...formData.variants, newVariant] });
     setCurrentVariant(blankVariant());
@@ -122,11 +141,11 @@ const Products = () => {
     const v = formData.variants[index];
     setCurrentVariant({
       color: v.color,
-      sizes: v.sizes && v.sizes.length > 0 ? v.sizes : [],
-      sku: v.sku,
-      price: v.price / 100,
+      sizes: getVariantSizeNames(v),
+      sku: getVariantSku(v),
+      price: (v.price || 0) / 100,
       currency: v.currency || "NGN",
-      stock: v.stock,
+      stock: getVariantStock(v),
       images: v.images || [],
     });
     setEditingVariantIdx(index);
@@ -143,7 +162,7 @@ const Products = () => {
     }
     const updated = formData.variants.map((v, i) =>
       i === editingVariantIdx
-        ? { ...v, ...currentVariant, price: currentVariant.price * 100 }
+        ? { ...v, ...currentVariant, price: (currentVariant.price || 0) * 100 }
         : v,
     );
     setFormData({ ...formData, variants: updated });

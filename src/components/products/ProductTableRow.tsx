@@ -1,6 +1,7 @@
 // components/products/ProductTableRow.tsx
 import { Edit, Copy, Trash2 } from "lucide-react";
 import type { Product } from "../../types/product";
+import { getVariantStock, getVariantMinPrice, getVariantSizeNames } from "../../types/product";
 import RowActionMenu from "../UI/RowActionMenu";
 
 interface ProductTableRowProps {
@@ -41,12 +42,11 @@ const ProductTableRow = ({
     }
   };
 
-  const getTotalStock = (variants: Product["variants"]) => {
-    return variants.reduce((sum, v) => sum + v.stock, 0);
-  };
+  const getTotalStock = (variants: Product["variants"]) =>
+    variants.reduce((sum, v) => sum + getVariantStock(v), 0);
 
   const getPriceRange = (variants: Product["variants"]) => {
-    const prices = variants.map((v) => v.price / 100);
+    const prices = variants.map((v) => getVariantMinPrice(v) / 100);
     const min = Math.min(...prices);
     const max = Math.max(...prices);
     const currency = "₦";
@@ -57,7 +57,7 @@ const ProductTableRow = ({
 
   const getVariantSummary = (variants: Product["variants"]) => {
     const colors = [...new Set(variants.map((v) => v.color))];
-    const sizes = [...new Set(variants.flatMap((v) => v.sizes || []))];
+    const sizes = [...new Set(variants.flatMap((v) => getVariantSizeNames(v)))];
     return `${colors.length} color${colors.length !== 1 ? "s" : ""} • ${sizes.length} size${sizes.length !== 1 ? "s" : ""}`;
   };
 
@@ -107,8 +107,17 @@ const ProductTableRow = ({
           <RowActionMenu
             actions={[
               { icon: Edit, label: "Edit", onClick: () => onEdit(product) },
-              { icon: Copy, label: "Duplicate", onClick: () => onDuplicate(product.id) },
-              { icon: Trash2, label: "Delete", onClick: () => onDelete(product), destructive: true },
+              {
+                icon: Copy,
+                label: "Duplicate",
+                onClick: () => onDuplicate(product.id),
+              },
+              {
+                icon: Trash2,
+                label: "Delete",
+                onClick: () => onDelete(product),
+                destructive: true,
+              },
             ]}
           />
         </div>

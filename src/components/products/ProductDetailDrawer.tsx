@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, Pencil, Camera, Package } from "lucide-react";
 import { toast } from "sonner";
 import type { Product } from "../../types/product";
+import { getVariantSizeNames, getVariantStock, getVariantMinPrice, getVariantSku } from "../../types/product";
 import ImageUpload, { ImagePlaceholder } from "../UI/ImageUpload";
 import MultiImageUpload from "../UI/MultiImageUpload";
 import { useUpdateProduct } from "../../hooks/useProducts";
@@ -62,7 +63,7 @@ const ProductDetailDrawer = ({ product, onClose, onEdit }: Props) => {
     product?.images?.filter((i) => !i.isPrimary).map((i) => i.url) || [];
 
   const totalStock =
-    product?.variants?.reduce((s, v) => s + (v.stock || 0), 0) ?? 0;
+    product?.variants?.reduce((s, v) => s + getVariantStock(v), 0) ?? 0;
 
   const handleEditImages = () => {
     setPrimaryImage(currentPrimary);
@@ -306,37 +307,34 @@ const ProductDetailDrawer = ({ product, onClose, onEdit }: Props) => {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-50 text-xs">
-                        {product.variants.map((v, i) => (
-                          <tr key={v.id || v._id || i} className="hover:bg-gray-50">
-                            <td className="px-3 py-2.5 text-gray-400">{i + 1}</td>
-                            <td className="px-3 py-2.5 text-gray-700">
-                              {v.color}
-                            </td>
-                            <td className="px-3 py-2.5">
-                              <div className="flex flex-wrap gap-1">
-                                {(v.sizes || []).map((s) => (
-                                  <span key={s} className="px-1.5 py-0.5 bg-gray-100 text-[10px] font-medium text-gray-700">
-                                    {s}
-                                  </span>
-                                ))}
-                              </div>
-                            </td>
-                            <td className="px-3 py-2.5 font-mono text-gray-500 text-[10px]">
-                              {v.sku}
-                            </td>
-                            <td className="px-3 py-2.5 font-medium text-gray-800">
-                              ₦
-                              {(v.price / 100).toLocaleString("en-NG", {
-                                minimumFractionDigits: 0,
-                              })}
-                            </td>
-                            <td
-                              className={`px-3 py-2.5 font-medium ${v.stock === 0 ? "text-red-500" : "text-gray-700"}`}
-                            >
-                              {v.stock}
-                            </td>
-                          </tr>
-                        ))}
+                        {product.variants.map((v, i) => {
+                          const sizeNames = getVariantSizeNames(v);
+                          const stock = getVariantStock(v);
+                          const price = getVariantMinPrice(v);
+                          const sku = getVariantSku(v);
+                          return (
+                            <tr key={v.id || v._id || i} className="hover:bg-gray-50">
+                              <td className="px-3 py-2.5 text-gray-400">{i + 1}</td>
+                              <td className="px-3 py-2.5 text-gray-700">{v.color}</td>
+                              <td className="px-3 py-2.5">
+                                <div className="flex flex-wrap gap-1">
+                                  {sizeNames.map((s) => (
+                                    <span key={s} className="px-1.5 py-0.5 bg-gray-100 text-[10px] font-medium text-gray-700">
+                                      {s}
+                                    </span>
+                                  ))}
+                                </div>
+                              </td>
+                              <td className="px-3 py-2.5 font-mono text-gray-500 text-[10px]">{sku}</td>
+                              <td className="px-3 py-2.5 font-medium text-gray-800">
+                                ₦{(price / 100).toLocaleString("en-NG", { minimumFractionDigits: 0 })}
+                              </td>
+                              <td className={`px-3 py-2.5 font-medium ${stock === 0 ? "text-red-500" : "text-gray-700"}`}>
+                                {stock}
+                              </td>
+                            </tr>
+                          );
+                        })}
                       </tbody>
                     </table>
                   </div>
