@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Mail, Send, User, Calendar, Clock, RefreshCw } from "lucide-react";
+import { X, Mail, Send, User, Calendar, Briefcase, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import type { Appointment } from "../../hooks/useAppointments";
 import { useSendAppointmentEmail } from "../../hooks/useAppointments";
@@ -10,28 +10,17 @@ interface Props {
   onClose: () => void;
 }
 
-const formatDateTime = (dateStr: string) =>
-  new Date(dateStr).toLocaleString("en-GB", {
-    weekday: "long",
-    day: "2-digit",
-    month: "long",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-
 const buildTemplate = (a: Appointment) => ({
-  subject: `Your In-Studio Consultation — ${new Date(a.preferredDate).toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" })}`,
-  body: `Hi ${a.fullName.split(" ")[0]},
+  subject: `Your Appointment Confirmation — ${new Date(a.scheduledAt).toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" })}`,
+  body: `Hi ${a.name.split(" ")[0]},
 
-Your in-studio consultation with SYS Empire has been confirmed. Here are your details:
+Your appointment with SYS Empire has been confirmed. Here are your details:
 
-Date & Time: ${formatDateTime(a.preferredDate)}
-Duration:    ${a.duration}
-Format:      In-Studio
-Location:    SYS Empire Studio, Lagos, Nigeria
-${a.whatDoYouNeed ? `\nYour request: "${a.whatDoYouNeed}"\n` : ""}
-Please arrive 5–10 minutes early. If you need to reschedule or have questions, simply reply to this email.
+Date:    ${new Date(a.scheduledAt).toLocaleDateString("en-GB", { weekday: "long", day: "2-digit", month: "long", year: "numeric" })}
+Service: ${a.service}
+Type:    ${a.type.replace(/-/g, " ")}
+${a.notes ? `\nNotes: "${a.notes}"\n` : ""}
+If you need to reschedule or have any questions, simply reply to this email.
 
 We look forward to seeing you.
 
@@ -49,7 +38,7 @@ const SendEmailModal = ({ appointment, onClose }: Props) => {
   const handleSend = () => {
     if (!subject.trim() || !body.trim()) return;
     sendEmail.mutate(
-      { id: appointment._id, subject, message: body },
+      { id: appointment.sourceId, subject, message: body },
       {
         onSuccess: () => {
           toast.success(`Email sent to ${appointment.email}`);
@@ -86,18 +75,11 @@ const SendEmailModal = ({ appointment, onClose }: Props) => {
                 <Mail className="w-4 h-4 text-white" />
               </div>
               <div>
-                <h3 className="text-sm font-light tracking-wide text-black">
-                  Send Email
-                </h3>
-                <p className="text-[10px] text-black/40 mt-0.5">
-                  In-Studio Consultation
-                </p>
+                <h3 className="text-sm font-light tracking-wide text-black">Send Email</h3>
+                <p className="text-[10px] text-black/40 mt-0.5">Appointment Confirmation</p>
               </div>
             </div>
-            <button
-              onClick={onClose}
-              className="p-1.5 hover:bg-black/5 transition text-black/40"
-            >
+            <button onClick={onClose} className="p-1.5 hover:bg-black/5 transition text-black/40">
               <X className="w-4 h-4" />
             </button>
           </div>
@@ -106,20 +88,16 @@ const SendEmailModal = ({ appointment, onClose }: Props) => {
           <div className="px-6 py-3 bg-black/2 border-b border-black/5 flex flex-wrap gap-4 shrink-0">
             <div className="flex items-center gap-1.5">
               <User className="w-3 h-3 text-black/30" />
-              <span className="text-[11px] text-black/60 font-light">
-                {appointment.fullName}
-              </span>
+              <span className="text-[11px] text-black/60 font-light">{appointment.name}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <Mail className="w-3 h-3 text-black/30" />
-              <span className="text-[11px] text-black/60 font-light">
-                {appointment.email}
-              </span>
+              <span className="text-[11px] text-black/60 font-light">{appointment.email}</span>
             </div>
             <div className="flex items-center gap-1.5">
               <Calendar className="w-3 h-3 text-black/30" />
               <span className="text-[11px] text-black/60 font-light">
-                {new Date(appointment.preferredDate).toLocaleDateString("en-GB", {
+                {new Date(appointment.scheduledAt).toLocaleDateString("en-GB", {
                   day: "2-digit",
                   month: "short",
                   year: "numeric",
@@ -127,33 +105,23 @@ const SendEmailModal = ({ appointment, onClose }: Props) => {
               </span>
             </div>
             <div className="flex items-center gap-1.5">
-              <Clock className="w-3 h-3 text-black/30" />
-              <span className="text-[11px] text-black/60 font-light">
-                {appointment.duration}
-              </span>
+              <Briefcase className="w-3 h-3 text-black/30" />
+              <span className="text-[11px] text-black/60 font-light">{appointment.service}</span>
             </div>
           </div>
 
           {/* Body */}
           <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
-            {/* To */}
             <div>
-              <label className="block text-[9px] uppercase tracking-[0.15em] text-black/40 mb-1.5">
-                To
-              </label>
+              <label className="block text-[9px] uppercase tracking-[0.15em] text-black/40 mb-1.5">To</label>
               <div className="flex items-center gap-2 px-3 py-2 border border-black/10 bg-black/2">
                 <Mail className="w-3.5 h-3.5 text-black/25 shrink-0" />
-                <span className="text-sm text-black/50 font-light">
-                  {appointment.email}
-                </span>
+                <span className="text-sm text-black/50 font-light">{appointment.email}</span>
               </div>
             </div>
 
-            {/* Subject */}
             <div>
-              <label className="block text-[9px] uppercase tracking-[0.15em] text-black/40 mb-1.5">
-                Subject
-              </label>
+              <label className="block text-[9px] uppercase tracking-[0.15em] text-black/40 mb-1.5">Subject</label>
               <input
                 type="text"
                 value={subject}
@@ -162,12 +130,9 @@ const SendEmailModal = ({ appointment, onClose }: Props) => {
               />
             </div>
 
-            {/* Message */}
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <label className="block text-[9px] uppercase tracking-[0.15em] text-black/40">
-                  Message
-                </label>
+                <label className="block text-[9px] uppercase tracking-[0.15em] text-black/40">Message</label>
                 <button
                   type="button"
                   onClick={() => {
@@ -187,9 +152,7 @@ const SendEmailModal = ({ appointment, onClose }: Props) => {
                 rows={12}
                 className="w-full px-3 py-2.5 border border-black/10 text-sm font-light leading-relaxed focus:outline-none focus:border-black transition resize-none"
               />
-              <p className="text-[9px] text-black/30 mt-1 text-right">
-                {body.length} characters
-              </p>
+              <p className="text-[9px] text-black/30 mt-1 text-right">{body.length} characters</p>
             </div>
           </div>
 

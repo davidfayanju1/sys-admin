@@ -5,6 +5,8 @@ import {
   ThumbsUp,
   Minus,
   ThumbsDown,
+  Mail,
+  Inbox,
   Search,
   Download,
   Eye,
@@ -141,16 +143,18 @@ const Feedback = () => {
     searchTerm,
     sentimentFilter,
   );
-  const items = feedbackResponse?.data ?? [];
+  const items = feedbackResponse?.data?.items ?? [];
   const meta = feedbackResponse?.meta ?? { total: 0 };
 
   const { data: summaryResponse, isLoading: summaryLoading } =
     useFeedbackSummary();
   const summary = summaryResponse?.data ?? {
     total: 0,
+    testimonials: 0,
+    contact: 0,
+    inquiries: 0,
+    pending: 0,
     positive: 0,
-    neutral: 0,
-    negative: 0,
   };
 
   const handleSearch = (e: React.FormEvent) => {
@@ -193,21 +197,14 @@ const Feedback = () => {
       },
       {
         name: "Feedback",
-        selector: (row) => row.feedback,
+        selector: (row) => row.message,
         cell: (row) => (
           <p className="text-xs text-black/60 font-light line-clamp-2 max-w-sm">
-            {row.feedback}
+            {row.message}
           </p>
         ),
         minWidth: "420px",
       },
-      // {
-      //   name: "Sentiment",
-      //   selector: (row) => row.sentiment ?? "",
-      //   sortable: true,
-      //   cell: (row) => <SentimentBadge sentiment={row.sentiment} />,
-      //   width: "130px",
-      // },
       {
         name: "Date",
         selector: (row) => row.createdAt,
@@ -256,7 +253,7 @@ const Feedback = () => {
       body: items.map((f) => [
         f.name || "Anonymous",
         f.email || "—",
-        f.feedback,
+        f.message,
         f.sentiment || "—",
         new Date(f.createdAt).toLocaleDateString(),
       ]),
@@ -300,23 +297,23 @@ const Feedback = () => {
             loading={summaryLoading}
           />
           <StatCard
-            icon={ThumbsUp}
-            label="Positive"
-            value={summary.positive}
+            icon={Mail}
+            label="Contact"
+            value={summary.contact}
             delay={0.05}
             loading={summaryLoading}
           />
           <StatCard
-            icon={Minus}
-            label="Neutral"
-            value={summary.neutral}
+            icon={Inbox}
+            label="Testimonials"
+            value={summary.testimonials}
             delay={0.1}
             loading={summaryLoading}
           />
           <StatCard
-            icon={ThumbsDown}
-            label="Negative"
-            value={summary.negative}
+            icon={ThumbsUp}
+            label="Positive"
+            value={summary.positive}
             delay={0.15}
             loading={summaryLoading}
           />
@@ -450,7 +447,7 @@ const Feedback = () => {
                     Their Feedback
                   </p>
                   <p className="text-sm text-black/70 font-light leading-relaxed">
-                    {selected.feedback}
+                    {selected.message}
                   </p>
                 </section>
               </div>

@@ -4,17 +4,16 @@ import {
   CalendarClock,
   Clock,
   CheckCircle,
-  XCircle,
+  CalendarCheck,
   Search,
   Download,
   Eye,
-  CalendarCheck,
-  Monitor,
-  MapPin,
   ChevronDown,
   X,
   Mail,
   Video,
+  Briefcase,
+  MessageSquare,
 } from "lucide-react";
 import RowActionMenu from "../components/UI/RowActionMenu";
 import SendEmailModal from "../components/appointments/SendEmailModal";
@@ -36,76 +35,29 @@ import { AnimatePresence, motion } from "framer-motion";
 const DataTable = (DataTableComponent as any).default || DataTableComponent;
 
 const StatusBadge = ({ status }: { status: string }) => {
-  const config: Record<
-    string,
-    { icon: any; label: string; className: string }
-  > = {
-    pending: {
-      icon: Clock,
-      label: "Pending",
-      className: "bg-yellow-100 text-yellow-700",
-    },
-    confirmed: {
-      icon: CalendarCheck,
-      label: "Confirmed",
-      className: "bg-blue-100 text-blue-700",
-    },
-    completed: {
-      icon: CheckCircle,
-      label: "Completed",
-      className: "bg-green-100 text-green-700",
-    },
-    cancelled: {
-      icon: XCircle,
-      label: "Cancelled",
-      className: "bg-red-100 text-red-700",
-    },
+  const config: Record<string, { icon: any; label: string; className: string }> = {
+    pending: { icon: Clock, label: "Pending", className: "bg-yellow-100 text-yellow-700" },
+    confirmed: { icon: CalendarCheck, label: "Confirmed", className: "bg-blue-100 text-blue-700" },
+    completed: { icon: CheckCircle, label: "Completed", className: "bg-green-100 text-green-700" },
+    cancelled: { icon: X, label: "Cancelled", className: "bg-red-100 text-red-700" },
   };
 
-  const statusConfig = config[status.toLowerCase()] || {
+  const { icon: Icon, label, className } = config[status.toLowerCase()] ?? {
     icon: Clock,
     label: status,
     className: "bg-gray-100 text-gray-700",
   };
 
-  const { icon: Icon, label, className } = statusConfig;
   return (
-    <span
-      className={`inline-flex items-center gap-1 px-2 py-1 text-[9px] uppercase tracking-wide font-medium ${className}`}
-    >
+    <span className={`inline-flex items-center gap-1 px-2 py-1 text-[9px] uppercase tracking-wide font-medium ${className}`}>
       <Icon className="w-3 h-3" />
       {label}
     </span>
   );
 };
 
-const FormatBadge = ({ format }: { format: string }) => {
-  const isVirtual = format.toLowerCase() === "virtual";
-  return (
-    <span
-      className={`inline-flex items-center gap-1 px-2 py-1 text-[9px] uppercase tracking-wide font-medium ${
-        isVirtual
-          ? "bg-purple-100 text-purple-700"
-          : "bg-orange-100 text-orange-700"
-      }`}
-    >
-      {isVirtual ? (
-        <Monitor className="w-3 h-3" />
-      ) : (
-        <MapPin className="w-3 h-3" />
-      )}
-      {isVirtual ? "Virtual" : "In-Studio"}
-    </span>
-  );
-};
-
 const customStyles = {
-  table: {
-    style: {
-      backgroundColor: "transparent",
-      borderRadius: "0px",
-    },
-  },
+  table: { style: { backgroundColor: "transparent", borderRadius: "0px" } },
   headRow: {
     style: {
       backgroundColor: "rgba(0, 0, 0, 0.03)",
@@ -129,18 +81,11 @@ const customStyles = {
     style: {
       minHeight: "56px",
       borderBottom: "1px solid rgba(0, 0, 0, 0.04)",
-      "&:hover": {
-        backgroundColor: "rgba(0, 0, 0, 0.02)",
-      },
+      "&:hover": { backgroundColor: "rgba(0, 0, 0, 0.02)" },
       transition: "background-color 0.15s ease",
     },
   },
-  cells: {
-    style: {
-      paddingLeft: "16px",
-      paddingRight: "16px",
-    },
-  },
+  cells: { style: { paddingLeft: "16px", paddingRight: "16px" } },
   pagination: {
     style: {
       fontSize: "11px",
@@ -157,23 +102,12 @@ const customStyles = {
       cursor: "pointer",
       transition: "0.2s",
       fill: "rgba(0, 0, 0, 0.4)",
-      "&:hover:not(:disabled)": {
-        backgroundColor: "rgba(0, 0, 0, 0.04)",
-        fill: "rgba(0, 0, 0, 0.8)",
-      },
-      "&:disabled": {
-        cursor: "default",
-        fill: "rgba(0, 0, 0, 0.15)",
-      },
+      "&:hover:not(:disabled)": { backgroundColor: "rgba(0, 0, 0, 0.04)", fill: "rgba(0, 0, 0, 0.8)" },
+      "&:disabled": { cursor: "default", fill: "rgba(0, 0, 0, 0.15)" },
     },
   },
   noData: {
-    style: {
-      padding: "32px",
-      color: "rgba(0, 0, 0, 0.4)",
-      fontSize: "12px",
-      fontWeight: "300",
-    },
+    style: { padding: "32px", color: "rgba(0, 0, 0, 0.4)", fontSize: "12px", fontWeight: "300" },
   },
 };
 
@@ -183,12 +117,9 @@ const Appointments = () => {
   const [statusFilter, setStatusFilter] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(20);
-  const [selectedAppointment, setSelectedAppointment] =
-    useState<Appointment | null>(null);
-  const [emailModalAppointment, setEmailModalAppointment] =
-    useState<Appointment | null>(null);
-  const [meetingModalAppointment, setMeetingModalAppointment] =
-    useState<Appointment | null>(null);
+  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
+  const [emailModalAppointment, setEmailModalAppointment] = useState<Appointment | null>(null);
+  const [meetingModalAppointment, setMeetingModalAppointment] = useState<Appointment | null>(null);
 
   const { data: appointmentsResponse, isLoading } = useAppointments(
     currentPage,
@@ -196,27 +127,22 @@ const Appointments = () => {
     searchTerm,
     statusFilter
   );
-  const appointments = appointmentsResponse?.data || [];
+  const appointments = appointmentsResponse?.data?.items || [];
   const meta = appointmentsResponse?.meta || { total: 0 };
 
-  const { data: summaryResponse, isLoading: summaryLoading } =
-    useAppointmentSummary();
+  const { data: summaryResponse, isLoading: summaryLoading } = useAppointmentSummary();
   const summary = summaryResponse?.data || {
     total: 0,
+    appointments: 0,
+    consultations: 0,
+    inquiries: 0,
     pending: 0,
     confirmed: 0,
-    completed: 0,
-    cancelled: 0,
   };
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     setSearchTerm(searchInput);
-    setCurrentPage(1);
-  };
-
-  const handleStatusFilter = (value: string) => {
-    setStatusFilter(value);
     setCurrentPage(1);
   };
 
@@ -234,11 +160,11 @@ const Appointments = () => {
       },
       {
         name: "Client",
-        selector: (row) => row.fullName,
+        selector: (row) => row.name,
         sortable: true,
         cell: (row) => (
           <div>
-            <p className="text-xs text-black/80 font-light">{row.fullName}</p>
+            <p className="text-xs text-black/80 font-light">{row.name}</p>
             <p className="text-[10px] text-black/40 font-light">{row.email}</p>
           </div>
         ),
@@ -246,62 +172,45 @@ const Appointments = () => {
       },
       {
         name: "Phone",
-        selector: (row) => row.phoneNumber,
+        selector: (row) => row.phone,
         cell: (row) => (
-          <span className="text-xs text-black/50 font-light">
-            {row.phoneNumber}
-          </span>
+          <span className="text-xs text-black/50 font-light">{row.phone}</span>
         ),
         width: "150px",
       },
       {
         name: "Type",
-        selector: (row) => row.appointmentType,
+        selector: (row) => row.type,
         sortable: true,
         cell: (row) => (
-          <span className="text-xs text-black/70 font-light">
-            {row.appointmentType}
+          <span className="text-xs text-black/70 font-light capitalize">
+            {row.type.replace(/-/g, " ")}
           </span>
         ),
         minWidth: "160px",
       },
       {
-        name: "Date & Time",
-        selector: (row) => row.preferredDate,
-        sortable: true,
+        name: "Service",
+        selector: (row) => row.service,
         cell: (row) => (
-          <div>
-            <p className="text-xs text-black/70 font-light">
-              {new Date(row.preferredDate).toLocaleDateString("en-GB", {
-                day: "2-digit",
-                month: "short",
-                year: "numeric",
-              })}
-            </p>
-            <p className="text-[10px] text-black/40 font-light">
-              {new Date(row.preferredDate).toLocaleTimeString("en-GB", {
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
-            </p>
-          </div>
+          <span className="text-xs text-black/60 font-light">{row.service}</span>
         ),
-        width: "140px",
+        minWidth: "140px",
       },
       {
-        name: "Duration",
-        selector: (row) => row.duration,
-        cell: (row) => (
-          <span className="text-xs text-black/50 font-light">{row.duration}</span>
-        ),
-        width: "100px",
-      },
-      {
-        name: "Format",
-        selector: (row) => row.consultationFormat,
+        name: "Scheduled",
+        selector: (row) => row.scheduledAt,
         sortable: true,
-        cell: (row) => <FormatBadge format={row.consultationFormat} />,
-        width: "120px",
+        cell: (row) => (
+          <span className="text-xs text-black/70 font-light">
+            {new Date(row.scheduledAt).toLocaleDateString("en-GB", {
+              day: "2-digit",
+              month: "short",
+              year: "numeric",
+            })}
+          </span>
+        ),
+        width: "130px",
       },
       {
         name: "Status",
@@ -318,8 +227,8 @@ const Appointments = () => {
           <RowActionMenu
             actions={[
               { icon: Eye, label: "View Details", onClick: () => setSelectedAppointment(row) },
-              { icon: Mail, label: "Send Email", onClick: () => setEmailModalAppointment(row), hidden: row.consultationFormat !== "in-studio" },
-              { icon: Video, label: "Schedule Meeting", onClick: () => setMeetingModalAppointment(row), hidden: row.consultationFormat !== "virtual" },
+              { icon: Mail, label: "Send Email", onClick: () => setEmailModalAppointment(row) },
+              { icon: Video, label: "Schedule Meeting", onClick: () => setMeetingModalAppointment(row) },
             ]}
           />
         ),
@@ -332,7 +241,6 @@ const Appointments = () => {
     if (!appointments.length) return;
 
     const doc = new jsPDF({ orientation: "landscape" });
-
     doc.setFontSize(16);
     doc.text("Appointments Report", 14, 15);
     doc.setFontSize(10);
@@ -340,26 +248,14 @@ const Appointments = () => {
 
     autoTable(doc, {
       startY: 28,
-      head: [
-        [
-          "Client",
-          "Email",
-          "Phone",
-          "Type",
-          "Date & Time",
-          "Duration",
-          "Format",
-          "Status",
-        ],
-      ],
+      head: [["Client", "Email", "Phone", "Type", "Service", "Scheduled", "Status"]],
       body: appointments.map((a) => [
-        a.fullName,
+        a.name,
         a.email,
-        a.phoneNumber,
-        a.appointmentType,
-        new Date(a.preferredDate).toLocaleString(),
-        a.duration,
-        a.consultationFormat,
+        a.phone,
+        a.type.replace(/-/g, " "),
+        a.service,
+        new Date(a.scheduledAt).toLocaleDateString(),
         a.status,
       ]),
       theme: "grid",
@@ -377,61 +273,26 @@ const Appointments = () => {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-light tracking-tight text-black">
-              Appointments
-            </h1>
+            <h1 className="text-2xl font-light tracking-tight text-black">Appointments</h1>
             <div className="w-12 h-px bg-black/10 mt-2" />
-            <p className="text-xs text-black/50 mt-3">
-              Manage and track all client consultations
-            </p>
+            <p className="text-xs text-black/50 mt-3">Manage and track all client consultations</p>
           </div>
-          <div className="flex gap-3">
-            <button
-              onClick={handleExport}
-              className="flex items-center gap-2 px-4 py-2 bg-black border border-black/10 hover:bg-black/80 transition text-sm"
-            >
-              <Download className="w-4 h-4 text-white" />
-              <span className="font-light text-white">Export</span>
-            </button>
-          </div>
+          <button
+            onClick={handleExport}
+            className="flex items-center gap-2 px-4 py-2 bg-black border border-black/10 hover:bg-black/80 transition text-sm"
+          >
+            <Download className="w-4 h-4 text-white" />
+            <span className="font-light text-white">Export</span>
+          </button>
         </div>
 
         {/* Summary Cards */}
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-          <StatCard
-            icon={CalendarClock}
-            label="Total"
-            value={summary.total}
-            loading={summaryLoading}
-          />
-          <StatCard
-            icon={Clock}
-            label="Pending"
-            value={summary.pending}
-            delay={0.05}
-            loading={summaryLoading}
-          />
-          <StatCard
-            icon={CalendarCheck}
-            label="Confirmed"
-            value={summary.confirmed}
-            delay={0.1}
-            loading={summaryLoading}
-          />
-          <StatCard
-            icon={CheckCircle}
-            label="Completed"
-            value={summary.completed}
-            delay={0.15}
-            loading={summaryLoading}
-          />
-          <StatCard
-            icon={XCircle}
-            label="Cancelled"
-            value={summary.cancelled}
-            delay={0.2}
-            loading={summaryLoading}
-          />
+          <StatCard icon={CalendarClock} label="Total" value={summary.total} loading={summaryLoading} />
+          <StatCard icon={Briefcase} label="Appointments" value={summary.appointments} delay={0.05} loading={summaryLoading} />
+          <StatCard icon={MessageSquare} label="Consultations" value={summary.consultations} delay={0.1} loading={summaryLoading} />
+          <StatCard icon={Clock} label="Pending" value={summary.pending} delay={0.15} loading={summaryLoading} />
+          <StatCard icon={CalendarCheck} label="Confirmed" value={summary.confirmed} delay={0.2} loading={summaryLoading} />
         </div>
 
         {/* Filters */}
@@ -447,11 +308,10 @@ const Appointments = () => {
             />
             <button type="submit" className="hidden" />
           </form>
-
           <div className="relative">
             <select
               value={statusFilter}
-              onChange={(e) => handleStatusFilter(e.target.value)}
+              onChange={(e) => { setStatusFilter(e.target.value); setCurrentPage(1); }}
               className="appearance-none pl-3 pr-8 py-2 border border-black/10 focus:outline-none focus:border-black/30 text-xs font-light text-black/70 bg-white transition-colors cursor-pointer"
             >
               <option value="">All Statuses</option>
@@ -489,9 +349,7 @@ const Appointments = () => {
               noDataComponent={
                 <div className="py-12 text-center">
                   <CalendarClock className="w-8 h-8 text-black/15 mx-auto mb-3" />
-                  <p className="text-xs text-black/40 tracking-wide">
-                    No appointments found.
-                  </p>
+                  <p className="text-xs text-black/40 tracking-wide">No appointments found.</p>
                 </div>
               }
             />
@@ -517,12 +375,9 @@ const Appointments = () => {
               transition={{ type: "tween", duration: 0.25 }}
               className="fixed top-0 right-0 h-full w-full max-w-md bg-white border-l border-black/10 z-50 flex flex-col"
             >
-              {/* Drawer Header */}
               <div className="flex items-center justify-between px-6 py-5 border-b border-black/10">
                 <div>
-                  <h2 className="text-sm font-light tracking-tight text-black">
-                    Appointment Details
-                  </h2>
+                  <h2 className="text-sm font-light tracking-tight text-black">Appointment Details</h2>
                   <p className="text-[10px] text-black/40 mt-0.5 uppercase tracking-widest">
                     {selectedAppointment.id}
                   </p>
@@ -535,124 +390,76 @@ const Appointments = () => {
                 </button>
               </div>
 
-              {/* Drawer Body */}
               <div className="flex-1 overflow-y-auto px-6 py-5 space-y-6">
-                {/* Status + Format */}
-                <div className="flex items-center gap-2">
-                  <StatusBadge status={selectedAppointment.status} />
-                  <FormatBadge format={selectedAppointment.consultationFormat} />
-                </div>
+                <StatusBadge status={selectedAppointment.status} />
 
-                {/* Client Info */}
                 <section>
-                  <p className="text-[9px] uppercase tracking-[0.2em] text-black/30 mb-3">
-                    Client
-                  </p>
+                  <p className="text-[9px] uppercase tracking-[0.2em] text-black/30 mb-3">Client</p>
                   <div className="space-y-3">
-                    <Row label="Name" value={selectedAppointment.fullName} />
+                    <Row label="Name" value={selectedAppointment.name} />
                     <Row label="Email" value={selectedAppointment.email} />
-                    <Row label="Phone" value={selectedAppointment.phoneNumber} />
+                    <Row label="Phone" value={selectedAppointment.phone} />
                   </div>
                 </section>
 
                 <div className="w-full h-px bg-black/5" />
 
-                {/* Appointment Info */}
                 <section>
-                  <p className="text-[9px] uppercase tracking-[0.2em] text-black/30 mb-3">
-                    Appointment
-                  </p>
+                  <p className="text-[9px] uppercase tracking-[0.2em] text-black/30 mb-3">Appointment</p>
                   <div className="space-y-3">
+                    <Row label="Type" value={selectedAppointment.type.replace(/-/g, " ")} />
+                    <Row label="Service" value={selectedAppointment.service} />
                     <Row
-                      label="Type"
-                      value={selectedAppointment.appointmentType}
-                    />
-                    <Row
-                      label="Date & Time"
-                      value={new Date(
-                        selectedAppointment.preferredDate
-                      ).toLocaleString("en-GB", {
+                      label="Scheduled"
+                      value={new Date(selectedAppointment.scheduledAt).toLocaleDateString("en-GB", {
                         day: "2-digit",
                         month: "long",
                         year: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit",
                       })}
-                    />
-                    <Row
-                      label="Duration"
-                      value={selectedAppointment.duration}
-                    />
-                    <Row
-                      label="Format"
-                      value={
-                        selectedAppointment.consultationFormat === "virtual"
-                          ? "Virtual (Online)"
-                          : "In-Studio"
-                      }
                     />
                   </div>
                 </section>
 
-                <div className="w-full h-px bg-black/5" />
-
-                {/* Request */}
-                <section>
-                  <p className="text-[9px] uppercase tracking-[0.2em] text-black/30 mb-3">
-                    Request
-                  </p>
-                  <p className="text-xs text-black/70 font-light leading-relaxed">
-                    {selectedAppointment.whatDoYouNeed || "—"}
-                  </p>
-                </section>
-
-                {selectedAppointment.additionalNotes && (
+                {selectedAppointment.notes && (
                   <>
                     <div className="w-full h-px bg-black/5" />
                     <section>
-                      <p className="text-[9px] uppercase tracking-[0.2em] text-black/30 mb-3">
-                        Additional Notes
-                      </p>
+                      <p className="text-[9px] uppercase tracking-[0.2em] text-black/30 mb-3">Notes</p>
                       <p className="text-xs text-black/70 font-light leading-relaxed">
-                        {selectedAppointment.additionalNotes}
+                        {selectedAppointment.notes}
                       </p>
                     </section>
                   </>
                 )}
               </div>
 
-              {/* Drawer Footer — quick actions */}
-              <div className="px-6 py-4 border-t border-black/10 shrink-0">
-                {selectedAppointment.consultationFormat === "in-studio" ? (
-                  <button
-                    onClick={() => {
-                      setEmailModalAppointment(selectedAppointment);
-                      setSelectedAppointment(null);
-                    }}
-                    className="w-full flex items-center justify-center gap-2 py-2.5 bg-black text-white text-sm hover:bg-black/80 transition"
-                  >
-                    <Mail className="w-3.5 h-3.5" />
-                    Send Email to Client
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => {
-                      setMeetingModalAppointment(selectedAppointment);
-                      setSelectedAppointment(null);
-                    }}
-                    className="w-full flex items-center justify-center gap-2 py-2.5 bg-[#1a73e8] text-white text-sm hover:bg-[#1557b0] transition"
-                  >
-                    <Video className="w-3.5 h-3.5" />
-                    Schedule Google Meet
-                  </button>
-                )}
+              <div className="px-6 py-4 border-t border-black/10 shrink-0 flex gap-3">
+                <button
+                  onClick={() => {
+                    setEmailModalAppointment(selectedAppointment);
+                    setSelectedAppointment(null);
+                  }}
+                  className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-black text-white text-sm hover:bg-black/80 transition"
+                >
+                  <Mail className="w-3.5 h-3.5" />
+                  Send Email
+                </button>
+                <button
+                  onClick={() => {
+                    setMeetingModalAppointment(selectedAppointment);
+                    setSelectedAppointment(null);
+                  }}
+                  className="flex-1 flex items-center justify-center gap-2 py-2.5 bg-[#1a73e8] text-white text-sm hover:bg-[#1557b0] transition"
+                >
+                  <Video className="w-3.5 h-3.5" />
+                  Schedule Meet
+                </button>
               </div>
             </motion.div>
           </>
         )}
       </AnimatePresence>
 
-      {/* Email Modal — In-Studio appointments */}
       {emailModalAppointment && (
         <SendEmailModal
           appointment={emailModalAppointment}
@@ -660,7 +467,6 @@ const Appointments = () => {
         />
       )}
 
-      {/* Meeting Modal — Virtual appointments */}
       {meetingModalAppointment && (
         <ScheduleMeetingModal
           appointment={meetingModalAppointment}
@@ -673,9 +479,7 @@ const Appointments = () => {
 
 const Row = ({ label, value }: { label: string; value: string }) => (
   <div className="flex items-start justify-between gap-4">
-    <span className="text-[10px] uppercase tracking-[0.1em] text-black/30 shrink-0 pt-0.5">
-      {label}
-    </span>
+    <span className="text-[10px] uppercase tracking-[0.1em] text-black/30 shrink-0 pt-0.5">{label}</span>
     <span className="text-xs text-black/70 font-light text-right">{value}</span>
   </div>
 );
