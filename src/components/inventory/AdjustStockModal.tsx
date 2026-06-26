@@ -1,6 +1,5 @@
-// components/inventory/AdjustStockModal.tsx
 import { motion, AnimatePresence } from "framer-motion";
-import { X } from "lucide-react";
+import { X, Plus, Minus } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import type { InventoryItem } from "../../types/inventory";
 
@@ -12,54 +11,28 @@ interface AdjustStockModalProps {
   isLoading?: boolean;
 }
 
-const AdjustStockModal = ({
-  isOpen,
-  item,
-  onConfirm,
-  onClose,
-  isLoading,
-}: AdjustStockModalProps) => {
-  const [delta, setDelta] = useState<number | null>(null);
+const AdjustStockModal = ({ isOpen, item, onConfirm, onClose, isLoading }: AdjustStockModalProps) => {
+  const [mode, setMode] = useState<"add" | "remove">("add");
+  const [qty, setQty] = useState<number | "">(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Reset delta when modal opens or item changes
   useEffect(() => {
     if (isOpen) {
-      setDelta(null);
-      // Focus the input after modal opens
-      setTimeout(() => {
-        inputRef.current?.focus();
-      }, 100);
+      setQty("");
+      setMode("add");
+      setTimeout(() => inputRef.current?.focus(), 100);
     }
   }, [isOpen, item]);
 
-  const handleDeltaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    if (value === "") {
-      setDelta(null);
-    } else {
-      const parsedValue = parseInt(value);
-      setDelta(isNaN(parsedValue) ? null : parsedValue);
-    }
-  };
-
-  // Prevent wheel from changing the input value
-  const handleWheel = (e: React.WheelEvent<HTMLInputElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    return false;
-  };
+  const numQty = typeof qty === "number" ? qty : 0;
+  const delta = mode === "add" ? numQty : -numQty;
+  const currentStock = item?.stock ?? 0;
+  const newStock = Math.max(0, currentStock + delta);
+  const canConfirm = numQty > 0;
 
   const handleConfirm = () => {
-    if (delta !== null && delta !== 0) {
-      onConfirm(delta);
-      setDelta(null);
-    }
+    if (canConfirm) onConfirm(delta);
   };
-
-  const currentStock = item?.stock || 0;
-  const newStock =
-    delta !== null ? Math.max(0, currentStock + delta) : currentStock;
 
   return (
     <AnimatePresence>
@@ -72,78 +45,108 @@ const AdjustStockModal = ({
           onClick={onClose}
         >
           <motion.div
-            initial={{ scale: 0.95, opacity: 0 }}
+            initial={{ scale: 0.96, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.95, opacity: 0 }}
-            className="bg-white w-full max-w-md"
+            exit={{ scale: 0.96, opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            className="bg-white w-full max-w-sm mx-4"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="p-5 border-b border-gray-200 flex items-center justify-between">
-              <h3 className="text-lg font-light">Adjust Stock</h3>
-              <button onClick={onClose} className="p-1 hover:bg-gray-100">
-                <X className="w-5 h-5" />
+            <div className="flex items-center justify-between px-5 py-4 border-b border-black/10">
+              <h3 className="text-sm font-light tracking-tight text-black">Adjust Stock</h3>
+              <button onClick={onClose} className="p-1 hover:bg-black/5 transition text-black/40">
+                <X className="w-4 h-4" />
               </button>
             </div>
 
-            <div className="p-5 space-y-4">
-              <div>
-                <p className="text-sm text-gray-600">Product</p>
-                <p className="font-medium text-gray-900">{item.productName}</p>
-                <p className="text-xs text-gray-500">
-                  {item.color} / {item.size} • SKU: {item.sku}
+            <div className="px-5 py-5 space-y-5">
+              {/* Item info */}
+              <div className="p-3 bg-black/2 border border-black/5">
+                <p className="text-sm font-light text-black/80">{item.name}</p>
+                <p className="text-[10px] text-black/40 mt-0.5 uppercase tracking-widest">
+                  {item.sku} · {item.category}
                 </p>
               </div>
 
-              <div>
-                <label className="block text-xs text-gray-500 mb-1">
-                  Current Stock
-                </label>
-                <p className="text-lg font-semibold">{currentStock} units</p>
+              {/* Current stock */}
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-black/50">Current Stock</p>
+                <p className="text-sm font-light text-black/80">
+                  {currentStock.toLocaleString()} <span className="text-black/40">{item.unit}</span>
+                </p>
               </div>
 
+              {/* Add / Remove toggle */}
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  onClick={() => setMode("add")}
+                  className={`flex items-center justify-center gap-1.5 py-2 text-xs border transition ${
+                    mode === "add"
+                      ? "border-black bg-black text-white"
+                      : "border-black/10 text-black/50 hover:border-black/30"
+                  }`}
+                >
+                  <Plus className="w-3 h-3" />
+                  Add Stock
+                </button>
+                <button
+                  onClick={() => setMode("remove")}
+                  className={`flex items-center justify-center gap-1.5 py-2 text-xs border transition ${
+                    mode === "remove"
+                      ? "border-red-500 bg-red-500 text-white"
+                      : "border-black/10 text-black/50 hover:border-black/30"
+                  }`}
+                >
+                  <Minus className="w-3 h-3" />
+                  Remove Stock
+                </button>
+              </div>
+
+              {/* Quantity */}
               <div>
-                <label className="block text-xs text-gray-500 mb-1">
-                  Adjustment (+/-)
+                <label className="block text-[9px] uppercase tracking-widest text-black/40 mb-1.5">
+                  Quantity ({item.unit})
                 </label>
                 <input
                   ref={inputRef}
                   type="number"
-                  value={delta === null ? "" : delta}
-                  onChange={handleDeltaChange}
-                  onWheel={handleWheel}
-                  className="w-full px-3 py-2 border border-gray-200 focus:border-black outline-none text-sm [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                  placeholder="Enter quantity (use - for reduction)"
+                  min={1}
+                  value={qty}
+                  onChange={(e) => setQty(e.target.value === "" ? "" : Math.max(0, parseInt(e.target.value) || 0))}
+                  onWheel={(e) => e.currentTarget.blur()}
+                  className="w-full px-3 py-2.5 border border-black/10 focus:outline-none focus:border-black text-sm font-light transition [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  placeholder="Enter quantity"
                   disabled={isLoading}
                 />
-                <p className="text-[10px] text-gray-400 mt-1">
-                  Positive value adds stock, negative removes stock
-                </p>
               </div>
 
-              <div className="pt-2">
-                <p className="text-sm text-gray-600">
-                  New Stock After Adjustment:
-                </p>
-                <p className="text-xl font-semibold text-green-600">
-                  {newStock} units
-                </p>
-              </div>
+              {/* Preview */}
+              {numQty > 0 && (
+                <div className="flex items-center justify-between py-3 border-t border-black/5">
+                  <p className="text-xs text-black/50">Stock After Adjustment</p>
+                  <p className={`text-lg font-light ${newStock === 0 ? "text-red-600" : newStock <= (item.reorderLevel) ? "text-yellow-600" : "text-green-600"}`}>
+                    {newStock.toLocaleString()} <span className="text-xs text-black/40">{item.unit}</span>
+                  </p>
+                </div>
+              )}
             </div>
 
-            <div className="p-5 border-t border-gray-200 flex justify-end gap-3">
+            <div className="flex gap-3 px-5 py-4 border-t border-black/10">
               <button
                 onClick={onClose}
-                className="px-4 py-2 border border-gray-200 text-gray-700 text-sm hover:border-black transition"
                 disabled={isLoading}
+                className="flex-1 py-2.5 border border-black/10 text-sm text-black/60 hover:border-black transition"
               >
                 Cancel
               </button>
               <button
                 onClick={handleConfirm}
-                className="px-4 py-2 bg-black text-white text-sm hover:bg-black/90 transition disabled:opacity-50"
-                disabled={delta === null || delta === 0 || isLoading}
+                disabled={!canConfirm || isLoading}
+                className={`flex-1 py-2.5 text-white text-sm transition disabled:opacity-40 disabled:cursor-not-allowed ${
+                  mode === "remove" ? "bg-red-500 hover:bg-red-600" : "bg-black hover:bg-black/80"
+                }`}
               >
-                {isLoading ? "Adjusting..." : "Apply Adjustment"}
+                {isLoading ? "Saving…" : mode === "add" ? "Add Stock" : "Remove Stock"}
               </button>
             </div>
           </motion.div>

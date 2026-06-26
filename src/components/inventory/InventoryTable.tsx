@@ -1,12 +1,37 @@
-// components/inventory/InventoryTable.tsx
 import { RefreshCw, Trash2 } from "lucide-react";
 import RowActionMenu from "../UI/RowActionMenu";
-import DataTableComponent, {
-  type TableColumn,
-} from "react-data-table-component";
+import DataTableComponent, { type TableColumn } from "react-data-table-component";
 import type { InventoryItem } from "../../types/inventory";
 
 const DataTable = (DataTableComponent as any).default || DataTableComponent;
+
+const fmt = (n: number) =>
+  new Intl.NumberFormat("en-NG", {
+    style: "currency",
+    currency: "NGN",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(n);
+
+const StatusBadge = ({ status }: { status: InventoryItem["status"] }) => {
+  const map = {
+    in_stock: "bg-green-100 text-green-700",
+    low_stock: "bg-yellow-100 text-yellow-700",
+    out_of_stock: "bg-red-100 text-red-700",
+  };
+  const label = { in_stock: "In Stock", low_stock: "Low Stock", out_of_stock: "Out of Stock" };
+  return (
+    <span className={`inline-flex px-2 py-0.5 text-[9px] uppercase tracking-wide font-medium ${map[status] ?? "bg-gray-100 text-gray-500"}`}>
+      {label[status] ?? status}
+    </span>
+  );
+};
+
+const CategoryBadge = ({ category }: { category: string }) => (
+  <span className="inline-flex px-2 py-0.5 text-[9px] uppercase tracking-wide font-medium bg-black/5 text-black/50">
+    {category}
+  </span>
+);
 
 interface InventoryTableProps {
   inventory: InventoryItem[];
@@ -16,10 +41,61 @@ interface InventoryTableProps {
   onPageChange: (page: number) => void;
   onPerRowsChange: (rowsPerPage: number) => void;
   onAdjustStock: (item: InventoryItem) => void;
-  onEdit: (item: InventoryItem) => void;
   onDelete: (item: InventoryItem) => void;
   isLoading?: boolean;
 }
+
+const customStyles = {
+  table: { style: { backgroundColor: "transparent", borderRadius: "0px" } },
+  headRow: {
+    style: {
+      backgroundColor: "rgba(0,0,0,0.03)",
+      borderBottom: "1px solid rgba(0,0,0,0.06)",
+      minHeight: "42px",
+    },
+  },
+  headCells: {
+    style: {
+      fontSize: "9px",
+      fontWeight: "300",
+      letterSpacing: "0.1em",
+      textTransform: "uppercase" as const,
+      color: "rgba(0,0,0,0.5)",
+      paddingLeft: "16px",
+      paddingRight: "16px",
+    },
+  },
+  rows: {
+    style: {
+      minHeight: "52px",
+      borderBottom: "1px solid rgba(0,0,0,0.04)",
+      "&:hover": { backgroundColor: "rgba(0,0,0,0.02)" },
+      transition: "background-color 0.15s ease",
+    },
+  },
+  cells: { style: { paddingLeft: "16px", paddingRight: "16px" } },
+  pagination: {
+    style: {
+      fontSize: "11px",
+      fontWeight: "300",
+      color: "rgba(0,0,0,0.5)",
+      borderTop: "1px solid rgba(0,0,0,0.06)",
+      minHeight: "48px",
+    },
+    pageButtonsStyle: {
+      borderRadius: "0px",
+      height: "32px",
+      width: "32px",
+      padding: "4px",
+      cursor: "pointer",
+      transition: "0.2s",
+      fill: "rgba(0,0,0,0.4)",
+      "&:hover:not(:disabled)": { backgroundColor: "rgba(0,0,0,0.04)", fill: "rgba(0,0,0,0.8)" },
+      "&:disabled": { cursor: "default", fill: "rgba(0,0,0,0.15)" },
+    },
+  },
+  noData: { style: { padding: "32px", color: "rgba(0,0,0,0.4)", fontSize: "12px", fontWeight: "300" } },
+};
 
 const InventoryTable = ({
   inventory,
@@ -29,276 +105,110 @@ const InventoryTable = ({
   onPageChange,
   onPerRowsChange,
   onAdjustStock,
-  // onEdit,
   onDelete,
   isLoading,
 }: InventoryTableProps) => {
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("en-NG", {
-      style: "currency",
-      currency: "NGN",
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(amount / 100);
-  };
-
-  const getStatusBadge = (status: InventoryItem["status"]) => {
-    switch (status) {
-      case "in_stock":
-        return (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] bg-green-100 text-green-700">
-            In Stock
-          </span>
-        );
-      case "low_stock":
-        return (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] bg-yellow-100 text-yellow-700">
-            Low Stock
-          </span>
-        );
-      case "out_of_stock":
-        return (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] bg-red-100 text-red-700">
-            Out of Stock
-          </span>
-        );
-      case "discontinued":
-        return (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] bg-gray-100 text-gray-600">
-            Discontinued
-          </span>
-        );
-      default:
-        return null;
-    }
-  };
-
-  // Helper function to get serial number for a row
-  const getSerialNumber = (row: InventoryItem) => {
-    const index = inventory.findIndex((item) => item.id === row.id);
-    return index !== -1 ? index + 1 + (currentPage - 1) * itemsPerPage : 0;
-  };
-
   const columns: TableColumn<InventoryItem>[] = [
     {
       name: "#",
-      selector: (row: InventoryItem) => getSerialNumber(row),
-      sortable: false,
-      width: "60px",
+      width: "50px",
       center: true,
-      cell: (row: InventoryItem) => (
-        <span className="text-xs text-gray-400">{getSerialNumber(row)}</span>
+      cell: (_row, idx) => (
+        <span className="text-xs text-black/40 font-light">
+          {(currentPage - 1) * itemsPerPage + idx + 1}
+        </span>
       ),
     },
     {
-      name: "Product",
-      selector: (row: InventoryItem) => row.productName,
+      name: "Material",
+      selector: (row) => row.name,
       sortable: true,
-      width: "250px",
-      cell: (row: InventoryItem) => (
-        <div className="flex items-center gap-3">
-          <img
-            src={
-              row.image ||
-              "https://placehold.co/400x400/e2e8f0/64748b?text=No+Image"
-            }
-            alt={row.productName}
-            className="w-8 h-8 object-cover bg-gray-100"
-            onError={(e) => {
-              (e.target as HTMLImageElement).src =
-                "https://placehold.co/400x400/e2e8f0/64748b?text=No+Image";
-            }}
-          />
-          <div>
-            <p className="text-sm font-medium text-gray-900">
-              {row.productName}
-            </p>
-            <p className="text-[10px] text-gray-400">
-              {row.color} / {row.size}
-            </p>
-          </div>
+      minWidth: "200px",
+      cell: (row) => (
+        <div>
+          <p className="text-xs text-black/80 font-light">{row.name}</p>
+          <CategoryBadge category={row.category} />
         </div>
       ),
     },
     {
       name: "SKU",
-      selector: (row: InventoryItem) => row.sku,
+      selector: (row) => row.sku,
       sortable: true,
-      width: "180px",
-      cell: (row: InventoryItem) => (
-        <span className="text-xs font-mono text-gray-600">{row.sku}</span>
+      width: "140px",
+      cell: (row) => (
+        <span className="text-xs font-mono text-black/50 tracking-wide">{row.sku}</span>
       ),
     },
     {
       name: "Stock",
-      selector: (row: InventoryItem) => row.stock,
+      selector: (row) => row.stock,
       sortable: true,
-      right: true,
-      width: "100px",
-      cell: (row: InventoryItem) => (
+      width: "130px",
+      cell: (row) => (
         <div>
-          <p
-            className={`text-sm font-medium ${row.stock <= row.reorderLevel && row.stock > 0 ? "text-yellow-600" : "text-gray-900"}`}
-          >
-            {row.stock} units
+          <p className={`text-sm font-light ${row.stock <= row.reorderLevel && row.stock > 0 ? "text-yellow-600" : "text-black/80"}`}>
+            {row.stock.toLocaleString()} <span className="text-[10px] text-black/40">{row.unit}</span>
           </p>
           {row.stock <= row.reorderLevel && row.stock > 0 && (
-            <p className="text-[9px] text-yellow-500">
-              Reorder at {row.reorderLevel}
-            </p>
+            <p className="text-[9px] text-yellow-500">Reorder at {row.reorderLevel}</p>
           )}
         </div>
       ),
     },
     {
-      name: "Available",
-      selector: (row: InventoryItem) => row.availableStock,
+      name: "Cost Price",
+      selector: (row) => row.costPrice,
       sortable: true,
-      right: true,
-      width: "100px",
-      cell: (row: InventoryItem) => (
-        <span className="text-sm text-gray-700">
-          {row.availableStock} units
-        </span>
+      width: "120px",
+      cell: (row) => (
+        <span className="text-xs text-black/70 font-light">{fmt(row.costPrice)}</span>
       ),
     },
     {
-      name: "Price",
-      selector: (row: InventoryItem) => row.sellingPrice,
+      name: "Supplier",
+      selector: (row) => row.supplier ?? "",
+      width: "150px",
+      cell: (row) => (
+        <span className="text-xs text-black/50 font-light">{row.supplier || "—"}</span>
+      ),
+    },
+    {
+      name: "Location",
+      selector: (row) => row.location ?? "",
       sortable: true,
-      right: true,
       width: "120px",
-      cell: (row: InventoryItem) => (
-        <div>
-          <p className="text-sm font-medium text-gray-900">
-            {formatCurrency(row.sellingPrice)}
-          </p>
-          <p className="text-[9px] text-gray-400">
-            Cost: {formatCurrency(row.costPrice)}
-          </p>
-        </div>
+      cell: (row) => (
+        <span className="text-xs text-black/50 font-light">{row.location || "—"}</span>
       ),
     },
     {
       name: "Status",
-      selector: (row: InventoryItem) => row.status,
+      selector: (row) => row.status,
       sortable: true,
-      width: "100px",
-      cell: (row: InventoryItem) => getStatusBadge(row.status),
-    },
-    {
-      name: "Location",
-      selector: (row: InventoryItem) => row.location,
-      sortable: true,
-      width: "120px",
-      cell: (row: InventoryItem) => (
-        <span className="text-xs text-gray-600">{row.location}</span>
-      ),
+      width: "110px",
+      cell: (row) => <StatusBadge status={row.status} />,
     },
     {
       name: "Actions",
-      right: true,
-      width: "120px",
-      cell: (row: InventoryItem) => (
-        <div className="flex items-center justify-end">
-          <RowActionMenu
-            actions={[
-              { icon: RefreshCw, label: "Adjust Stock", onClick: () => onAdjustStock(row) },
-              { icon: Trash2, label: "Delete", onClick: () => onDelete(row), destructive: true },
-            ]}
-          />
-        </div>
+      center: true,
+      width: "70px",
+      cell: (row) => (
+        <RowActionMenu
+          actions={[
+            { icon: RefreshCw, label: "Adjust Stock", onClick: () => onAdjustStock(row) },
+            { icon: Trash2, label: "Delete", onClick: () => onDelete(row), destructive: true },
+          ]}
+        />
       ),
     },
   ];
 
-  const customStyles = {
-    table: {
-      style: {
-        backgroundColor: "transparent",
-        borderRadius: "0px",
-      },
-    },
-    headRow: {
-      style: {
-        backgroundColor: "rgba(0, 0, 0, 0.03)",
-        borderBottom: "1px solid rgba(0, 0, 0, 0.06)",
-        minHeight: "42px",
-        borderRadius: "0px",
-      },
-    },
-    headCells: {
-      style: {
-        fontSize: "9px",
-        fontWeight: "300",
-        letterSpacing: "0.1em",
-        textTransform: "uppercase" as const,
-        color: "rgba(0, 0, 0, 0.5)",
-        paddingLeft: "16px",
-        paddingRight: "16px",
-      },
-    },
-    rows: {
-      style: {
-        minHeight: "48px",
-        borderBottom: "1px solid rgba(0, 0, 0, 0.04)",
-        "&:hover": {
-          backgroundColor: "rgba(0, 0, 0, 0.02)",
-        },
-        transition: "background-color 0.15s ease",
-      },
-    },
-    cells: {
-      style: {
-        paddingLeft: "16px",
-        paddingRight: "16px",
-      },
-    },
-    pagination: {
-      style: {
-        fontSize: "11px",
-        fontWeight: "300",
-        color: "rgba(0, 0, 0, 0.5)",
-        borderTop: "1px solid rgba(0, 0, 0, 0.06)",
-        minHeight: "48px",
-      },
-      pageButtonsStyle: {
-        borderRadius: "0px",
-        height: "32px",
-        width: "32px",
-        padding: "4px",
-        cursor: "pointer",
-        transition: "0.2s",
-        fill: "rgba(0, 0, 0, 0.4)",
-        "&:hover:not(:disabled)": {
-          backgroundColor: "rgba(0, 0, 0, 0.04)",
-          fill: "rgba(0, 0, 0, 0.8)",
-        },
-        "&:disabled": {
-          cursor: "default",
-          fill: "rgba(0, 0, 0, 0.15)",
-        },
-      },
-    },
-    noData: {
-      style: {
-        padding: "32px",
-        color: "rgba(0, 0, 0, 0.4)",
-        fontSize: "12px",
-        fontWeight: "300",
-      },
-    },
-  };
-
   if (isLoading) {
     return (
-      <div className="bg-white border border-gray-200">
-        <div className="p-12 text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black mx-auto" />
-          <p className="text-sm text-black/40 mt-3 font-light">
-            Loading inventory...
-          </p>
-        </div>
+      <div className="p-12 text-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b border-black mx-auto" />
+        <p className="text-xs text-black/40 mt-3 font-light">Loading inventory…</p>
       </div>
     );
   }
@@ -320,9 +230,7 @@ const InventoryTable = ({
       persistTableHead
       noDataComponent={
         <div className="py-12 text-center">
-          <p className="text-xs text-black/40 tracking-wide">
-            No inventory items found matching your criteria.
-          </p>
+          <p className="text-xs text-black/40 tracking-wide">No materials found.</p>
         </div>
       }
     />

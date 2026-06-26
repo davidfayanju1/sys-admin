@@ -1,72 +1,67 @@
 import { useState } from "react";
 import DashboardLayout from "../layout/DashboardLayout";
-import { Search, Download, Plus } from "lucide-react";
+import { Search, Download, Plus, ChevronDown } from "lucide-react";
 import {
   useInventory,
   useInventorySummary,
   useAdjustStock,
   useDeleteInventoryRow,
+  useCreateInventory,
 } from "../hooks/useInventory";
 import InventoryStats from "../components/inventory/InventoryStats";
 import InventoryTable from "../components/inventory/InventoryTable";
 import AdjustStockModal from "../components/inventory/AdjustStockModal";
 import DeleteConfirmModal from "../components/inventory/DeleteConfirmationModal";
+import AddMaterialModal from "../components/inventory/AddMaterialModal";
 import type { InventoryItem } from "../types/inventory";
-import { toast } from "sonner";
+import type { CreateInventoryPayload } from "../types/inventory";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { toast } from "sonner";
+
+const fmt = (n: number) =>
+  new Intl.NumberFormat("en-NG", {
+    style: "currency",
+    currency: "NGN",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(n);
 
 const Inventory = () => {
-  // UI State
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(20);
   const [searchTerm, setSearchTerm] = useState("");
   const [searchInput, setSearchInput] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [locationFilter, setLocationFilter] = useState("all");
+  const [categoryFilter, setCategoryFilter] = useState("all");
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
   const [showAdjustModal, setShowAdjustModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showAddModal, setShowAddModal] = useState(false);
 
-  // Queries
   const { data: inventoryData, isLoading: isLoadingInventory } = useInventory(
     currentPage,
     itemsPerPage,
     searchTerm,
     statusFilter,
     locationFilter,
+    categoryFilter,
   );
   const { data: summary, isLoading: isLoadingSummary } = useInventorySummary();
 
-  // Mutations
   const adjustStock = useAdjustStock();
   const deleteInventoryRow = useDeleteInventoryRow();
+  const createInventory = useCreateInventory();
 
   const inventory = inventoryData?.data?.items || [];
   const meta = inventoryData?.meta || { total: 0, totalPages: 1 };
   const locations = summary?.locations || [];
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("en-NG", {
-      style: "currency",
-      currency: "NGN",
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(amount / 100);
-  };
+  const categories = summary?.categories || [];
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     setSearchTerm(searchInput);
-    setCurrentPage(1);
-  };
-
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-  };
-
-  const handlePerRowsChange = (rowsPerPage: number) => {
-    setItemsPerPage(rowsPerPage);
     setCurrentPage(1);
   };
 
@@ -76,17 +71,16 @@ const Inventory = () => {
   };
 
   const handleAdjustConfirm = (delta: number) => {
-    if (selectedItem) {
-      adjustStock.mutate(
-        { id: selectedItem.id, delta },
-        {
-          onSuccess: () => {
-            setShowAdjustModal(false);
-            setSelectedItem(null);
-          },
+    if (!selectedItem) return;
+    adjustStock.mutate(
+      { id: selectedItem.id, delta },
+      {
+        onSuccess: () => {
+          setShowAdjustModal(false);
+          setSelectedItem(null);
         },
-      );
-    }
+      },
+    );
   };
 
   const handleDeleteClick = (item: InventoryItem) => {
@@ -95,69 +89,67 @@ const Inventory = () => {
   };
 
   const handleDeleteConfirm = () => {
-    if (selectedItem) {
-      deleteInventoryRow.mutate(selectedItem.id, {
-        onSuccess: () => {
-          setShowDeleteModal(false);
-          setSelectedItem(null);
-        },
-      });
-    }
+    if (!selectedItem) return;
+    deleteInventoryRow.mutate(selectedItem.id, {
+      onSuccess: () => {
+        setShowDeleteModal(false);
+        setSelectedItem(null);
+      },
+    });
   };
 
-  const handleEdit = (item: InventoryItem) => {
-    toast.info(`Edit functionality coming soon for ${item.productName}`);
+  const handleAddMaterial = (payload: CreateInventoryPayload) => {
+    createInventory.mutate(payload, {
+      onSuccess: () => setShowAddModal(false),
+    });
   };
 
-  // PDF Export
-  const handlePDFExport = () => {
+  const handleExport = () => {
     if (!inventory.length) {
       toast.error("No inventory data to export");
       return;
     }
 
     const doc = new jsPDF({ orientation: "landscape" });
-
     doc.setFontSize(16);
-    doc.setTextColor(0, 0, 0);
     doc.text("Inventory Report", 14, 15);
-
-    doc.setFontSize(10);
-    doc.setTextColor(100, 100, 100);
-    doc.text(`Generated on: ${new Date().toLocaleString()}`, 14, 22);
-
     doc.setFontSize(9);
+    doc.setTextColor(100, 100, 100);
+    doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 22);
+    doc.text(
+      `Total Materials: ${summary?.totalItems ?? 0}  |  Total Units: ${summary?.totalUnits ?? 0}  |  Stock Value: ${fmt(summary?.stockValue ?? 0)}  |  Low Stock: ${summary?.lowStock ?? 0}  |  Out of Stock: ${summary?.outOfStock ?? 0}`,
+      14,
+      29,
+    );
     doc.setTextColor(0, 0, 0);
-    const summaryText = `Total SKUs: ${summary?.totalSkus || 0} | Total Units: ${summary?.totalUnits || 0} | Stock Value: ${formatCurrency(summary?.stockValue || 0)} | Low Stock: ${summary?.lowStock || 0} | Out of Stock: ${summary?.outOfStock || 0}`;
-    doc.text(summaryText, 14, 30);
-
-    const tableHeaders = [
-      "Product",
-      "SKU",
-      "Color",
-      "Size",
-      "Stock",
-      "Available",
-      "Price (₦)",
-      "Status",
-      "Location",
-    ];
-
-    const tableRows = inventory.map((item) => [
-      item.productName,
-      item.sku,
-      item.color,
-      item.size,
-      item.stock.toString(),
-      item.availableStock.toString(),
-      (item.sellingPrice / 100).toLocaleString(),
-      item.status.replace("_", " ").toUpperCase(),
-      item.location,
-    ]);
 
     autoTable(doc, {
-      head: [tableHeaders],
-      body: tableRows,
+      head: [
+        [
+          "Material",
+          "SKU",
+          "Category",
+          "Unit",
+          "Stock",
+          "Reorder At",
+          "Cost Price",
+          "Supplier",
+          "Location",
+          "Status",
+        ],
+      ],
+      body: inventory.map((item) => [
+        item.name,
+        item.sku,
+        item.category,
+        item.unit,
+        item.stock.toString(),
+        item.reorderLevel.toString(),
+        fmt(item.costPrice),
+        item.supplier || "—",
+        item.location || "—",
+        item.status.replace(/_/g, " ").toUpperCase(),
+      ]),
       startY: 35,
       styles: {
         fontSize: 8,
@@ -169,24 +161,9 @@ const Inventory = () => {
         fillColor: [0, 0, 0],
         textColor: [255, 255, 255],
         fontSize: 8,
-        fontStyle: "bold",
       },
-      alternateRowStyles: {
-        fillColor: [245, 245, 245],
-      },
-      columnStyles: {
-        0: { cellWidth: 40 },
-        1: { cellWidth: 30 },
-        2: { cellWidth: 20 },
-        3: { cellWidth: 15 },
-        4: { cellWidth: 15 },
-        5: { cellWidth: 20 },
-        6: { cellWidth: 25 },
-        7: { cellWidth: 25 },
-        8: { cellWidth: 25 },
-      },
+      alternateRowStyles: { fillColor: [248, 248, 248] },
       margin: { left: 14, right: 14 },
-      pageBreak: "auto",
     });
 
     const pageCount = doc.getNumberOfPages();
@@ -200,14 +177,14 @@ const Inventory = () => {
         doc.internal.pageSize.getHeight() - 10,
       );
       doc.text(
-        "SysEmpire Fashion - Inventory Report",
+        "SYS Empire — Inventory Report",
         14,
         doc.internal.pageSize.getHeight() - 10,
       );
     }
 
-    doc.save(`inventory_report_${new Date().getTime()}.pdf`);
-    toast.success("Inventory exported to PDF successfully");
+    doc.save(`inventory_${Date.now()}.pdf`);
+    toast.success("Inventory exported to PDF");
   };
 
   return (
@@ -216,118 +193,158 @@ const Inventory = () => {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-light tracking-tight">Inventory</h1>
+            <h1 className="text-2xl font-light tracking-tight text-black">
+              Inventory
+            </h1>
             <div className="w-12 h-px bg-black/10 mt-2" />
-            <p className="text-xs text-gray-500 mt-3">
-              Manage your stock levels, track inventory, and manage variants
+            <p className="text-xs text-black/50 mt-3">
+              Track raw materials, fabrics, threads, notions, and supplies
             </p>
           </div>
           <div className="flex items-center gap-3">
             <button
-              onClick={handlePDFExport}
-              className="flex items-center gap-2 px-3 py-1.5 border border-gray-200 text-sm hover:border-black transition"
+              onClick={handleExport}
+              className="flex items-center gap-2 px-3 py-2 border border-black/10 text-sm hover:border-black transition"
             >
               <Download className="w-4 h-4" />
-              Export PDF
+              <span className="font-light">Export</span>
             </button>
-            <button className="flex items-center gap-2 px-3 py-1.5 bg-black text-white text-sm hover:bg-black/90 transition">
+            <button
+              onClick={() => setShowAddModal(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-black text-white text-sm hover:bg-black/80 transition"
+            >
               <Plus className="w-4 h-4" />
-              Add Stock
+              <span className="font-light">Add Material</span>
             </button>
           </div>
         </div>
 
-        {/* Stats Cards */}
+        {/* Stats */}
         <InventoryStats summary={summary} isLoading={isLoadingSummary} />
 
-        {/* Search and Filters */}
-        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+        {/* Filters */}
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 bg-white border border-black/10 p-4">
           <form onSubmit={handleSearch} className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-black/30" />
             <input
               type="text"
-              placeholder="Search by product, SKU, or color..."
+              placeholder="Search by name, SKU, or supplier…"
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 border border-gray-200 focus:border-black outline-none text-sm"
+              className="w-full pl-9 pr-4 py-2 border border-black/10 focus:outline-none focus:border-black text-sm font-light transition"
             />
             <button type="submit" className="hidden" />
           </form>
-          <div className="flex gap-3">
-            <select
-              value={statusFilter}
-              onChange={(e) => {
-                setStatusFilter(e.target.value);
-                setCurrentPage(1);
-              }}
-              className="px-3 py-2 border border-gray-200 focus:border-black outline-none text-sm bg-white"
-            >
-              <option value="all">All Status</option>
-              <option value="in_stock">In Stock</option>
-              <option value="low_stock">Low Stock</option>
-              <option value="out_of_stock">Out of Stock</option>
-              <option value="discontinued">Discontinued</option>
-            </select>
-            {locations.length > 0 && (
+
+          <div className="flex flex-wrap gap-3">
+            <div className="relative">
               <select
-                value={locationFilter}
+                value={statusFilter}
                 onChange={(e) => {
-                  setLocationFilter(e.target.value);
+                  setStatusFilter(e.target.value);
                   setCurrentPage(1);
                 }}
-                className="px-3 py-2 border border-gray-200 focus:border-black outline-none text-sm bg-white"
+                className="appearance-none pl-3 pr-7 py-2 border border-black/10 focus:outline-none focus:border-black text-xs font-light text-black/70 bg-white cursor-pointer"
               >
-                <option value="all">All Locations</option>
-                {locations.map((loc) => (
-                  <option key={loc} value={loc}>
-                    {loc}
-                  </option>
-                ))}
+                <option value="all">All Status</option>
+                <option value="in_stock">In Stock</option>
+                <option value="low_stock">Low Stock</option>
+                <option value="out_of_stock">Out of Stock</option>
               </select>
+              <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-black/40 pointer-events-none" />
+            </div>
+
+            {categories.length > 0 && (
+              <div className="relative">
+                <select
+                  value={categoryFilter}
+                  onChange={(e) => {
+                    setCategoryFilter(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  className="appearance-none pl-3 pr-7 py-2 border border-black/10 focus:outline-none focus:border-black text-xs font-light text-black/70 bg-white cursor-pointer capitalize"
+                >
+                  <option value="all">All Categories</option>
+                  {categories.map((cat) => (
+                    <option key={cat} value={cat} className="capitalize">
+                      {cat}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-black/40 pointer-events-none" />
+              </div>
+            )}
+
+            {locations.length > 0 && (
+              <div className="relative">
+                <select
+                  value={locationFilter}
+                  onChange={(e) => {
+                    setLocationFilter(e.target.value);
+                    setCurrentPage(1);
+                  }}
+                  className="appearance-none pl-3 pr-7 py-2 border border-black/10 focus:outline-none focus:border-black text-xs font-light text-black/70 bg-white cursor-pointer"
+                >
+                  <option value="all">All Locations</option>
+                  {locations.map((loc) => (
+                    <option key={loc} value={loc}>
+                      {loc}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-black/40 pointer-events-none" />
+              </div>
             )}
           </div>
         </div>
 
-        {/* Inventory Table */}
-        <div className="bg-white border border-gray-200 rounded-none overflow-hidden">
+        {/* Table */}
+        <div className="bg-white border border-black/10">
           <InventoryTable
             inventory={inventory}
             totalRows={meta.total || 0}
             currentPage={currentPage}
             itemsPerPage={itemsPerPage}
-            onPageChange={handlePageChange}
-            onPerRowsChange={handlePerRowsChange}
+            onPageChange={setCurrentPage}
+            onPerRowsChange={(n) => {
+              setItemsPerPage(n);
+              setCurrentPage(1);
+            }}
             onAdjustStock={handleAdjustStock}
-            onEdit={handleEdit}
             onDelete={handleDeleteClick}
             isLoading={isLoadingInventory}
           />
         </div>
-
-        {/* Adjust Stock Modal */}
-        <AdjustStockModal
-          isOpen={showAdjustModal}
-          item={selectedItem}
-          onConfirm={handleAdjustConfirm}
-          onClose={() => {
-            setShowAdjustModal(false);
-            setSelectedItem(null);
-          }}
-          isLoading={adjustStock.isPending}
-        />
-
-        {/* Delete Confirmation Modal */}
-        <DeleteConfirmModal
-          isOpen={showDeleteModal}
-          item={selectedItem}
-          onConfirm={handleDeleteConfirm}
-          onClose={() => {
-            setShowDeleteModal(false);
-            setSelectedItem(null);
-          }}
-          isLoading={deleteInventoryRow.isPending}
-        />
       </div>
+
+      <AddMaterialModal
+        isOpen={showAddModal}
+        onConfirm={handleAddMaterial}
+        onClose={() => setShowAddModal(false)}
+        isLoading={createInventory.isPending}
+      />
+
+      <AdjustStockModal
+        isOpen={showAdjustModal}
+        item={selectedItem}
+        onConfirm={handleAdjustConfirm}
+        onClose={() => {
+          setShowAdjustModal(false);
+          setSelectedItem(null);
+        }}
+        isLoading={adjustStock.isPending}
+      />
+
+      <DeleteConfirmModal
+        isOpen={showDeleteModal}
+        item={selectedItem}
+        onConfirm={handleDeleteConfirm}
+        onClose={() => {
+          setShowDeleteModal(false);
+          setSelectedItem(null);
+        }}
+        isLoading={deleteInventoryRow.isPending}
+      />
     </DashboardLayout>
   );
 };

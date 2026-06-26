@@ -1,35 +1,33 @@
-// types/inventory.ts
 export interface InventoryItem {
   id: string;
-  productId: string;
-  productName: string;
+  name: string;
   sku: string;
-  color: string;
-  size: string;
+  category: string;
+  unit: string;
   stock: number;
-  reservedStock: number;
-  availableStock: number;
   reorderLevel: number;
   reorderQuantity: number;
   costPrice: number;
-  sellingPrice: number;
-  location: string;
-  status: "in_stock" | "low_stock" | "out_of_stock" | "discontinued";
+  supplier?: string;
+  location?: string;
+  notes?: string;
+  status: "in_stock" | "low_stock" | "out_of_stock";
   lastUpdated: string;
-  image: string;
-  variantId: string;
 }
 
 export interface InventorySummary {
-  totalSkus: number;
+  totalItems: number;
   totalUnits: number;
   stockValue: number;
   lowStock: number;
   outOfStock: number;
   locations: string[];
+  categories: string[];
 }
 
 export interface InventoryResponse {
+  status: string;
+  message: string;
   data: {
     items: InventoryItem[];
     summary: InventorySummary;
@@ -44,11 +42,20 @@ export interface InventoryResponse {
   };
 }
 
+export interface CreateInventoryPayload {
+  name: string;
+  sku: string;
+  category: string;
+  unit: string;
+  stock: number;
+  reorderLevel: number;
+  reorderQuantity: number;
+  costPrice: number;
+  supplier?: string;
+  location?: string;
+  notes?: string;
+}
+
 export interface AdjustStockPayload {
-  rowId: string;
-  productId?: string;
-  variantId?: string;
-  sku?: string;
   delta: number;
-  stock?: number;
 }
