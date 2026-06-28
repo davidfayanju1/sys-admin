@@ -152,6 +152,20 @@ const ProductTable = ({
       ),
     },
     {
+      name: "Category",
+      selector: (row: Product) => row.category || "",
+      sortable: true,
+      width: "140px",
+      cell: (row: Product) =>
+        row.category ? (
+          <span className="inline-flex px-2 py-0.5 text-[9px] uppercase tracking-wide font-medium bg-black/5 text-black/50">
+            {row.category}
+          </span>
+        ) : (
+          <span className="text-xs text-black/30">—</span>
+        ),
+    },
+    {
       name: "Price",
       selector: (row: Product) => getPriceDisplay(row),
       sortable: true,

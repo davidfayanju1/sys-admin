@@ -91,6 +91,7 @@ export interface Product {
   sku: string;
   description: string;
   shortDescription: string;
+  category?: string | null;
   categories: string[];
   price: number;
   finalPrice: number;

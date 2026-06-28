@@ -51,6 +51,7 @@ const transformProductToFormData = (product: Product) => {
     title: product.name || product.title || "",
     description: product.description || "",
     details: product.care || "",
+    category: product.category || "",
     status: (product.status === "published" ? "active" : product.status) as
       | "active"
       | "draft"
@@ -77,6 +78,7 @@ const Products = () => {
     title: "",
     description: "",
     details: "",
+    category: "",
     status: "active" as "active" | "draft" | "archived",
     primaryImage: "",
     secondaryImages: [] as string[],
@@ -228,6 +230,7 @@ const Products = () => {
       title: "",
       description: "",
       details: "",
+      category: "",
       status: "active",
       primaryImage: "",
       secondaryImages: [],

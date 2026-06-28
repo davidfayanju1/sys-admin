@@ -44,24 +44,24 @@ const processQueue = (error: any, token: string | null = null) => {
 // Logout function to clear all session data
 const logoutUser = () => {
   // Clear all storage
-  // sessionStorage.clear();
-  // localStorage.clear();
-  // // Clear axios default header
-  // delete api.defaults.headers.common["Authorization"];
-  // // Show toast notification
-  // toast.error("Your session has expired. Please log in again.", {
-  //   duration: 4000,
-  //   position: "bottom-right",
-  // });
-  // // Redirect to login page if not already there
-  // if (
-  //   window.location.pathname !== "/" &&
-  //   !window.location.pathname.includes("/signup")
-  // ) {
-  //   setTimeout(() => {
-  //     window.location.href = "/";
-  //   }, 1500);
-  // }
+  sessionStorage.clear();
+  localStorage.clear();
+  // Clear axios default header
+  delete api.defaults.headers.common["Authorization"];
+  // Show toast notification
+  toast.error("Your session has expired. Please log in again.", {
+    duration: 4000,
+    position: "bottom-right",
+  });
+  // Redirect to login page if not already there
+  if (
+    window.location.pathname !== "/" &&
+    !window.location.pathname.includes("/signup")
+  ) {
+    setTimeout(() => {
+      window.location.href = "/";
+    }, 1500);
+  }
 };
 
 // Response Interceptor: Handle token expiration and refresh attempts

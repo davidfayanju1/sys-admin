@@ -4,9 +4,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import DashboardLayout from "../layout/DashboardLayout";
 import {
   User,
-  Store,
+  // Store,
   Shield,
-  Palette,
+  // Palette,
   Eye,
   EyeOff,
   Save,
@@ -93,10 +93,7 @@ const Settings = () => {
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const logoInputRef = useRef<HTMLInputElement>(null);
 
-  const handleImageUpload = (
-    file: File,
-    onSuccess: (url: string) => void
-  ) => {
+  const handleImageUpload = (file: File, onSuccess: (url: string) => void) => {
     if (!file.type.startsWith("image/")) {
       toast.error("Only image files are allowed");
       return;
@@ -129,18 +126,18 @@ const Settings = () => {
       icon: <User className="w-4 h-4" />,
       description: "Your personal information",
     },
-    {
-      id: "store",
-      name: "Store Settings",
-      icon: <Store className="w-4 h-4" />,
-      description: "Manage your store details",
-    },
-    {
-      id: "brand",
-      name: "Brand Identity",
-      icon: <Palette className="w-4 h-4" />,
-      description: "Customize your brand look",
-    },
+    // {
+    //   id: "store",
+    //   name: "Store Settings",
+    //   icon: <Store className="w-4 h-4" />,
+    //   description: "Manage your store details",
+    // },
+    // {
+    //   id: "brand",
+    //   name: "Brand Identity",
+    //   icon: <Palette className="w-4 h-4" />,
+    //   description: "Customize your brand look",
+    // },
     // {
     //   id: "notifications",
     //   name: "Notifications",
@@ -281,7 +278,10 @@ const Settings = () => {
                   className="hidden"
                   onChange={(e) => {
                     const file = e.target.files?.[0];
-                    if (file) handleImageUpload(file, (url) => setProfile({ ...profile, avatar: url }));
+                    if (file)
+                      handleImageUpload(file, (url) =>
+                        setProfile({ ...profile, avatar: url }),
+                      );
                     e.target.value = "";
                   }}
                 />
@@ -576,7 +576,11 @@ const Settings = () => {
                       onClick={() => logoInputRef.current?.click()}
                       className="text-xs text-black border border-gray-200 px-3 py-1 hover:border-black transition disabled:opacity-40"
                     >
-                      {uploadMedia.isPending ? "Uploading…" : brand.logo ? "Change Logo" : "Upload Logo"}
+                      {uploadMedia.isPending
+                        ? "Uploading…"
+                        : brand.logo
+                          ? "Change Logo"
+                          : "Upload Logo"}
                     </button>
                     {brand.logo && (
                       <button
@@ -595,7 +599,10 @@ const Settings = () => {
                     className="hidden"
                     onChange={(e) => {
                       const file = e.target.files?.[0];
-                      if (file) handleImageUpload(file, (url) => setBrand({ ...brand, logo: url }));
+                      if (file)
+                        handleImageUpload(file, (url) =>
+                          setBrand({ ...brand, logo: url }),
+                        );
                       e.target.value = "";
                     }}
                   />

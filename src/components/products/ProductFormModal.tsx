@@ -13,6 +13,7 @@ interface ProductFormModalProps {
     title: string;
     description: string;
     details: string;
+    category: string;
     status: "active" | "draft" | "archived";
     primaryImage: string;
     secondaryImages: string[];
@@ -114,6 +115,21 @@ const ProductFormModal = ({
                       <option value="active">Active</option>
                       <option value="draft">Draft</option>
                       <option value="archived">Archived</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">
+                      Category
+                    </label>
+                    <select
+                      value={formData.category || ""}
+                      onChange={(e) =>
+                        onFormChange({ ...formData, category: e.target.value })
+                      }
+                      className="w-full px-3 py-2 border border-gray-200 focus:border-black outline-none text-sm bg-white"
+                    >
+                      <option value="">No category</option>
+                      <option value="ready-to-wear">Ready to Wear</option>
                     </select>
                   </div>
                   <div className="md:col-span-2">

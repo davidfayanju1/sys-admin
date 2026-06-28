@@ -17,12 +17,12 @@ import ProtectedRoute from "./components/auth-guard/ProtectedRoute";
 import PublicRoute from "./components/auth-guard/PublicRoute";
 import ScrollToTop from "./components/common/ScrollToTop";
 import ForgotPassword from "./pages/auth/forgot-password";
-import Expense from "./pages/expense";
 import Staffs from "./pages/staffs";
 import Appointments from "./pages/appointments";
 import Feedback from "./pages/feedback";
 import Messages from "./pages/messages";
 import Services from "./pages/services";
+import ExpensePage from "./pages/expense";
 
 function App() {
   return (
@@ -137,7 +137,7 @@ function App() {
             path="/expenses"
             element={
               <ProtectedRoute>
-                <Expense />
+                <ExpensePage />
               </ProtectedRoute>
             }
           />

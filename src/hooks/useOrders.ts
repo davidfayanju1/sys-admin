@@ -2,29 +2,13 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "../lib/axios";
 
 export interface OrderItem {
-  _id?: string;
-  product?: {
-    _id?: string;
-    name?: string;
-    title?: string;
-    sku?: string;
-    images?: Array<{ url: string; isPrimary?: boolean } | string>;
-  };
-  variant?: {
-    color?: string;
-    size?: string;
-    sizes?: string[];
-    sku?: string;
-  };
-  name?: string;
-  sku?: string;
-  color?: string;
-  size?: string;
+  _id: string;
+  product: string; // product ID
+  name: string;
   quantity: number;
-  unitPrice?: number;
-  price?: number;
-  subtotal?: number;
-  amount?: number;
+  unitPrice: number;
+  subtotal: number;
+  isBespoke: boolean;
 }
 
 export interface OrderAddress {
@@ -41,52 +25,49 @@ export interface OrderAddress {
 
 export interface StatusHistoryEntry {
   status: string;
+  label: string;
+  note: string;
   timestamp: string;
-  note?: string;
-  updatedBy?: string;
 }
 
 export interface OrderDetail {
-  _id: string;
-  id?: string;
-  orderNumber?: string;
-  customer?: string;
-  user?: {
-    _id?: string;
-    name?: string;
-    fullName?: string;
-    firstName?: string;
-    lastName?: string;
-    email?: string;
-    phone?: string;
+  id: string;           // readable order ID e.g. "SE-MPOHKXG3-ZYNC"
+  _id: string;          // MongoDB document ID
+  customer: {
+    name: string;
+    email: string;
+    phone: string;
   };
-  shippingAddress?: OrderAddress;
-  billingAddress?: OrderAddress;
-  items?: OrderItem[];
-  orderItems?: OrderItem[];
-  subtotal?: number;
-  shippingFee?: number;
-  shippingCost?: number;
-  discount?: number;
-  discountAmount?: number;
-  amount?: number;
-  totalPrice?: number;
-  total?: number;
-  currency?: string;
-  paymentMethod?: string;
-  paymentReference?: string;
-  paymentProvider?: string;
-  trackingNumber?: string;
-  carrier?: string;
-  estimatedDelivery?: string;
-  notes?: string;
-  adminNotes?: string;
+  date: string;
+  amount: number;
   status: string;
   paymentStatus: string;
-  date?: string;
-  createdAt?: string;
-  updatedAt?: string;
-  statusHistory?: StatusHistoryEntry[];
+  items: OrderItem[];
+  subtotal: number;
+  shippingFee: number;
+  tax: number;
+  discount: number;
+  total: number;
+  currency: string;
+  shippingAddress: OrderAddress;
+  billingAddress: OrderAddress;
+  shippingMethod: string;
+  shippingMethodLabel: string;
+  deliveryType: string;
+  paymentMethod: string;
+  paymentMethodLabel: string;
+  paymentReference: string;
+  paidAt: string | null;
+  trackingNumber: string;
+  notes: string;
+  statusHistory: StatusHistoryEntry[];
+  txRef: string;
+  paymentLink: string;
+  cancellationReason: string;
+  cancelledAt: string | null;
+  shippedAt: string;
+  deliveredAt: string;
+  updatedAt: string;
 }
 
 export interface Order {

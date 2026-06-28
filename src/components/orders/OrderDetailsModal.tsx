@@ -27,7 +27,6 @@ import {
   useUpdateOrderPayment,
   useDeleteOrder,
   type OrderDetail,
-  type OrderItem,
   type OrderAddress,
 } from "../../hooks/useOrders";
 import Skeleton from "../UI/Skeleton";
@@ -42,68 +41,13 @@ interface OrderDetailsModalProps {
 
 const dash = "—";
 
-const getCustomerName = (d: OrderDetail) =>
-  d.user?.fullName ||
-  d.user?.name ||
-  [d.user?.firstName, d.user?.lastName].filter(Boolean).join(" ") ||
-  d.customer ||
-  dash;
-
-const getItems = (d: OrderDetail): OrderItem[] =>
-  (Array.isArray(d.items) ? d.items : null) || d.orderItems || [];
-
-const getItemImage = (item: OrderItem): string | null => {
-  const imgs = item.product?.images;
-  if (!imgs?.length) return null;
-  const first = imgs[0];
-  return typeof first === "string" ? first : first.url || null;
-};
-
-const getItemName = (item: OrderItem) =>
-  item.product?.name || item.product?.title || item.name || dash;
-
-const getItemSku = (item: OrderItem) =>
-  item.variant?.sku || item.sku || item.product?.sku || dash;
-
-const getItemColor = (item: OrderItem) =>
-  item.variant?.color || item.color || null;
-
-const getItemSize = (item: OrderItem) =>
-  item.variant?.size ||
-  item.variant?.sizes?.[0] ||
-  item.size ||
-  null;
-
-const getItemUnitPrice = (item: OrderItem) =>
-  item.unitPrice ?? item.price ?? 0;
-
-const getItemSubtotal = (item: OrderItem) =>
-  item.subtotal ?? item.amount ?? getItemUnitPrice(item) * (item.quantity || 1);
-
-const getTotal = (d: OrderDetail) =>
-  d.totalPrice ?? d.total ?? d.amount ?? 0;
-
-const getSubtotal = (d: OrderDetail) => {
-  if (d.subtotal != null) return d.subtotal;
-  const items = getItems(d);
-  if (items.length)
-    return items.reduce((sum, i) => sum + getItemSubtotal(i), 0);
-  return getTotal(d);
-};
-
-const getShippingFee = (d: OrderDetail) =>
-  d.shippingFee ?? d.shippingCost ?? 0;
-
-const getDiscount = (d: OrderDetail) =>
-  d.discount ?? d.discountAmount ?? 0;
-
 const fmt = (n: number) =>
   `₦${Number(n).toLocaleString("en-NG", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })}`;
 
-const fmtDate = (s?: string) => {
+const fmtDate = (s?: string | null) => {
   if (!s) return dash;
   try {
     return new Date(s).toLocaleDateString("en-GB", {
@@ -116,7 +60,7 @@ const fmtDate = (s?: string) => {
   }
 };
 
-const fmtDateTime = (s?: string) => {
+const fmtDateTime = (s?: string | null) => {
   if (!s) return dash;
   try {
     return new Date(s).toLocaleString("en-GB", {
@@ -266,7 +210,7 @@ const CustomSelect = ({
 
 const ORDER_STEPS = [
   { key: "pending", label: "Pending", icon: Clock },
-  { key: "processing", label: "Processing", icon: Package },
+  { key: "confirmed", label: "Confirmed", icon: Package },
   { key: "shipped", label: "Shipped", icon: Truck },
   { key: "delivered", label: "Delivered", icon: CheckCircle },
 ];
@@ -274,7 +218,10 @@ const ORDER_STEPS = [
 const OrderProgressTracker = ({ status }: { status: string }) => {
   const lower = status.toLowerCase();
   const isCancelled = lower === "cancelled";
-  const currentIdx = ORDER_STEPS.findIndex((s) => s.key === lower);
+
+  // Map "processing" → "confirmed" for display
+  const mappedStatus = lower === "processing" ? "confirmed" : lower;
+  const currentIdx = ORDER_STEPS.findIndex((s) => s.key === mappedStatus);
 
   if (isCancelled) {
     return (
@@ -300,9 +247,7 @@ const OrderProgressTracker = ({ status }: { status: string }) => {
               <div className="flex flex-col items-center gap-1.5 min-w-0">
                 <div
                   className={`w-8 h-8 flex items-center justify-center border-2 transition-all ${
-                    done
-                      ? "border-black bg-black"
-                      : "border-black/15 bg-white"
+                    done ? "border-black bg-black" : "border-black/15 bg-white"
                   }`}
                 >
                   <Icon
@@ -356,19 +301,14 @@ const DrawerSkeleton = () => (
       <Skeleton className="h-16 rounded-sm" />
       <Skeleton className="h-16 rounded-sm" />
     </div>
-    <div className="space-y-1.5">
-      <Skeleton className="h-3 rounded-sm" />
-      <Skeleton className="h-3 rounded-sm" />
-      <Skeleton className="w-2/3 h-3 rounded-sm" />
-    </div>
   </div>
 );
 
-// ─── Main Component ───────────────────────────────────────────────────────────
+// ─── Status Options ───────────────────────────────────────────────────────────
 
 const statusOptions = [
   { label: "Pending", value: "pending", className: "text-yellow-700 bg-yellow-50" },
-  { label: "Processing", value: "processing", className: "text-blue-700 bg-blue-50" },
+  { label: "Confirmed", value: "confirmed", className: "text-blue-700 bg-blue-50" },
   { label: "Shipped", value: "shipped", className: "text-purple-700 bg-purple-50" },
   { label: "Delivered", value: "delivered", className: "text-green-700 bg-green-50" },
   { label: "Cancelled", value: "cancelled", className: "text-red-700 bg-red-50" },
@@ -380,6 +320,8 @@ const paymentOptions = [
   { label: "Failed", value: "failed", className: "text-red-700 bg-red-50" },
   { label: "Refunded", value: "refunded", className: "text-gray-700 bg-gray-100" },
 ];
+
+// ─── Main Component ───────────────────────────────────────────────────────────
 
 const OrderDetailsModal = ({ orderId, onClose }: OrderDetailsModalProps) => {
   const { data: orderDetailsData, isLoading, error } = useOrderDetails(orderId);
@@ -393,7 +335,8 @@ const OrderDetailsModal = ({ orderId, onClose }: OrderDetailsModalProps) => {
     orderDetailsData?.data || (orderDetailsData as any) || null;
 
   const handleCopyId = () => {
-    navigator.clipboard.writeText(orderId);
+    const ref = details?.id || orderId;
+    navigator.clipboard.writeText(ref);
     setCopiedId(true);
     setTimeout(() => setCopiedId(false), 1500);
   };
@@ -409,10 +352,7 @@ const OrderDetailsModal = ({ orderId, onClose }: OrderDetailsModalProps) => {
 
   const handlePaymentChange = async (newStatus: string) => {
     try {
-      await updatePaymentMutation.mutateAsync({
-        id: orderId,
-        paymentStatus: newStatus,
-      });
+      await updatePaymentMutation.mutateAsync({ id: orderId, paymentStatus: newStatus });
       toast.success("Payment status updated");
     } catch {
       toast.error("Failed to update payment status");
@@ -430,16 +370,13 @@ const OrderDetailsModal = ({ orderId, onClose }: OrderDetailsModalProps) => {
     }
   };
 
-  const items = details ? getItems(details) : [];
-  const addressLines = details ? formatAddress(details.shippingAddress) : [];
-  const subtotal = details ? getSubtotal(details) : 0;
-  const shippingFee = details ? getShippingFee(details) : 0;
-  const discount = details ? getDiscount(details) : 0;
-  const total = details ? getTotal(details) : 0;
-  const createdAt = details?.createdAt || details?.date;
-  const updatedAt = details?.updatedAt;
-  const orderRef =
-    details?.orderNumber || details?._id || details?.id || orderId;
+  const items = details?.items ?? [];
+  const addressLines = formatAddress(details?.shippingAddress);
+  const subtotal = details?.subtotal ?? 0;
+  const shippingFee = details?.shippingFee ?? 0;
+  const tax = details?.tax ?? 0;
+  const discount = details?.discount ?? 0;
+  const total = details?.total ?? 0;
 
   return (
     <>
@@ -462,9 +399,7 @@ const OrderDetailsModal = ({ orderId, onClose }: OrderDetailsModalProps) => {
           <div className="min-w-0">
             <div className="flex items-center gap-2">
               <h2 className="text-base font-light tracking-wide truncate">
-                {details?.orderNumber
-                  ? `Order ${details.orderNumber}`
-                  : "Order Details"}
+                {details?.id ? `Order ${details.id}` : "Order Details"}
               </h2>
               <button
                 onClick={handleCopyId}
@@ -478,14 +413,10 @@ const OrderDetailsModal = ({ orderId, onClose }: OrderDetailsModalProps) => {
                 )}
               </button>
             </div>
-            <p className="text-[10px] font-mono text-black/40 mt-0.5 truncate">
-              {orderId}
-            </p>
-            {(createdAt || updatedAt) && (
+            {details?.date && (
               <p className="text-[10px] text-black/30 mt-1">
-                {createdAt && `Created ${fmtDateTime(createdAt)}`}
-                {updatedAt && createdAt && " · "}
-                {updatedAt && `Updated ${fmtDateTime(updatedAt)}`}
+                Placed {fmtDate(details.date)}
+                {details.updatedAt && ` · Updated ${fmtDate(details.updatedAt)}`}
               </p>
             )}
           </div>
@@ -539,17 +470,9 @@ const OrderDetailsModal = ({ orderId, onClose }: OrderDetailsModalProps) => {
                     <User className="w-3.5 h-3.5 text-black/30" />
                     <SectionLabel>Customer</SectionLabel>
                   </div>
-                  <InfoRow label="Name" value={getCustomerName(details)} />
-                  <InfoRow label="Email" value={details.user?.email} />
-                  <InfoRow label="Phone" value={details.user?.phone} />
-                  {details.user?._id && (
-                    <InfoRow
-                      label="Customer ID"
-                      value={details.user._id}
-                      mono
-                      copyable
-                    />
-                  )}
+                  <InfoRow label="Name" value={details.customer?.name || dash} />
+                  <InfoRow label="Email" value={details.customer?.email || null} />
+                  <InfoRow label="Phone" value={details.customer?.phone || null} />
                 </div>
 
                 {/* Shipping Address */}
@@ -561,17 +484,22 @@ const OrderDetailsModal = ({ orderId, onClose }: OrderDetailsModalProps) => {
                   {addressLines.length > 0 ? (
                     <div className="space-y-0.5">
                       {addressLines.map((line, i) => (
-                        <p key={i} className="text-[11px] text-black/70">
-                          {line}
-                        </p>
+                        <p key={i} className="text-[11px] text-black/70">{line}</p>
                       ))}
                     </div>
                   ) : (
-                    <p className="text-[11px] text-black/30">{dash}</p>
+                    <div className="space-y-0.5">
+                      <p className="text-[11px] text-black/30 italic">No address provided</p>
+                      {details.shippingMethodLabel && (
+                        <p className="text-[10px] text-black/40 mt-1 uppercase tracking-wider">
+                          {details.shippingMethodLabel}
+                        </p>
+                      )}
+                    </div>
                   )}
                 </div>
 
-                {/* Payment Details */}
+                {/* Payment */}
                 <div className="border border-black/08 p-4 space-y-0.5">
                   <div className="flex items-center gap-1.5 mb-3">
                     <CreditCard className="w-3.5 h-3.5 text-black/30" />
@@ -579,21 +507,21 @@ const OrderDetailsModal = ({ orderId, onClose }: OrderDetailsModalProps) => {
                   </div>
                   <InfoRow
                     label="Method"
-                    value={
-                      details.paymentMethod
-                        ? details.paymentMethod.charAt(0).toUpperCase() +
-                          details.paymentMethod.slice(1)
-                        : null
-                    }
+                    value={details.paymentMethodLabel || details.paymentMethod || null}
                   />
                   <InfoRow
                     label="Reference"
-                    value={details.paymentReference}
+                    value={details.paymentReference || null}
                     mono
                     copyable
                   />
-                  <InfoRow label="Provider" value={details.paymentProvider} />
-                  <InfoRow label="Currency" value={details.currency} />
+                  {details.txRef && (
+                    <InfoRow label="Tx Ref" value={details.txRef} mono copyable />
+                  )}
+                  <InfoRow label="Currency" value={details.currency || null} />
+                  {details.paidAt && (
+                    <InfoRow label="Paid At" value={fmtDateTime(details.paidAt)} />
+                  )}
                 </div>
 
                 {/* Fulfillment */}
@@ -603,22 +531,21 @@ const OrderDetailsModal = ({ orderId, onClose }: OrderDetailsModalProps) => {
                     <SectionLabel>Fulfillment</SectionLabel>
                   </div>
                   <InfoRow
+                    label="Delivery"
+                    value={details.shippingMethodLabel || details.shippingMethod || null}
+                  />
+                  <InfoRow
                     label="Tracking No."
-                    value={details.trackingNumber}
+                    value={details.trackingNumber || null}
                     mono
                     copyable
                   />
-                  <InfoRow label="Carrier" value={details.carrier} />
-                  <InfoRow
-                    label="Est. Delivery"
-                    value={fmtDate(details.estimatedDelivery)}
-                  />
-                  <InfoRow
-                    label="Order Ref"
-                    value={orderRef}
-                    mono
-                    copyable
-                  />
+                  {details.shippedAt && (
+                    <InfoRow label="Shipped" value={fmtDate(details.shippedAt)} />
+                  )}
+                  {details.deliveredAt && (
+                    <InfoRow label="Delivered" value={fmtDate(details.deliveredAt)} />
+                  )}
                 </div>
               </div>
 
@@ -669,91 +596,51 @@ const OrderDetailsModal = ({ orderId, onClose }: OrderDetailsModalProps) => {
                 {items.length > 0 ? (
                   <div className="border border-black/10 divide-y divide-black/5">
                     {/* Table header */}
-                    <div className="grid grid-cols-[auto_1fr_auto_auto] gap-3 px-4 py-2.5 bg-black/2">
-                      <span className="text-[9px] uppercase tracking-wider text-black/35 w-10">
-                        Item
-                      </span>
+                    <div className="grid grid-cols-[1fr_auto_auto] gap-3 px-4 py-2.5 bg-black/2">
                       <span className="text-[9px] uppercase tracking-wider text-black/35">
                         Product
                       </span>
                       <span className="text-[9px] uppercase tracking-wider text-black/35 text-right">
                         Qty
                       </span>
-                      <span className="text-[9px] uppercase tracking-wider text-black/35 text-right min-w-[80px]">
+                      <span className="text-[9px] uppercase tracking-wider text-black/35 text-right min-w-[90px]">
                         Subtotal
                       </span>
                     </div>
 
-                    {items.map((item, idx) => {
-                      const img = getItemImage(item);
-                      const color = getItemColor(item);
-                      const size = getItemSize(item);
-                      const unitPrice = getItemUnitPrice(item);
-                      const subtotalItem = getItemSubtotal(item);
-
-                      return (
-                        <div
-                          key={item._id || idx}
-                          className="grid grid-cols-[auto_1fr_auto_auto] gap-3 px-4 py-3 items-start"
-                        >
-                          {/* Image */}
-                          <div className="w-10 h-10 bg-black/5 shrink-0 overflow-hidden">
-                            {img ? (
-                              <img
-                                src={img}
-                                alt={getItemName(item)}
-                                className="w-full h-full object-cover"
-                                onError={(e) => {
-                                  (e.target as HTMLImageElement).style.display =
-                                    "none";
-                                }}
-                              />
-                            ) : (
-                              <div className="w-full h-full flex items-center justify-center">
-                                <Package className="w-4 h-4 text-black/20" />
-                              </div>
-                            )}
-                          </div>
-
-                          {/* Name + meta */}
-                          <div className="min-w-0">
-                            <p className="text-[12px] text-black/80 font-medium truncate">
-                              {getItemName(item)}
-                            </p>
-                            <div className="flex flex-wrap gap-1.5 mt-1">
-                              {color && (
-                                <span className="text-[9px] uppercase tracking-wider px-1.5 py-0.5 bg-black/5 text-black/50">
-                                  {color}
-                                </span>
-                              )}
-                              {size && (
-                                <span className="text-[9px] uppercase tracking-wider px-1.5 py-0.5 bg-black/5 text-black/50">
-                                  {size}
-                                </span>
-                              )}
-                              <span className="text-[9px] font-mono text-black/30 self-center">
-                                {getItemSku(item)}
+                    {items.map((item, idx) => (
+                      <div
+                        key={item._id || idx}
+                        className="grid grid-cols-[1fr_auto_auto] gap-3 px-4 py-3 items-center"
+                      >
+                        {/* Name + meta */}
+                        <div className="min-w-0">
+                          <p className="text-[12px] text-black/80 font-medium truncate">
+                            {item.name}
+                          </p>
+                          <div className="flex flex-wrap gap-1.5 mt-1">
+                            <span className="text-[10px] text-black/40">
+                              {fmt(item.unitPrice)} × {item.quantity}
+                            </span>
+                            {item.isBespoke && (
+                              <span className="text-[9px] uppercase tracking-wider px-1.5 py-0.5 bg-black/5 text-black/50">
+                                Bespoke
                               </span>
-                            </div>
-                            {unitPrice > 0 && (
-                              <p className="text-[10px] text-black/40 mt-1">
-                                {fmt(unitPrice)} × {item.quantity || 1}
-                              </p>
                             )}
                           </div>
-
-                          {/* Qty */}
-                          <span className="text-[12px] text-black/60 text-right self-center">
-                            {item.quantity || 1}
-                          </span>
-
-                          {/* Subtotal */}
-                          <span className="text-[12px] font-medium text-black text-right self-center min-w-[80px]">
-                            {fmt(subtotalItem)}
-                          </span>
                         </div>
-                      );
-                    })}
+
+                        {/* Qty */}
+                        <span className="text-[12px] text-black/60 text-right">
+                          {item.quantity}
+                        </span>
+
+                        {/* Subtotal */}
+                        <span className="text-[12px] font-medium text-black text-right min-w-[90px]">
+                          {fmt(item.subtotal)}
+                        </span>
+                      </div>
+                    ))}
                   </div>
                 ) : (
                   <p className="text-[11px] text-black/30 border border-black/8 px-4 py-5">
@@ -776,12 +663,16 @@ const OrderDetailsModal = ({ orderId, onClose }: OrderDetailsModalProps) => {
                       {shippingFee > 0 ? fmt(shippingFee) : "Free"}
                     </span>
                   </div>
+                  {tax > 0 && (
+                    <div className="flex justify-between px-4 py-2.5">
+                      <span className="text-[11px] text-black/50">Tax</span>
+                      <span className="text-[11px] text-black/70">{fmt(tax)}</span>
+                    </div>
+                  )}
                   {discount > 0 && (
                     <div className="flex justify-between px-4 py-2.5">
                       <span className="text-[11px] text-black/50">Discount</span>
-                      <span className="text-[11px] text-green-600">
-                        −{fmt(discount)}
-                      </span>
+                      <span className="text-[11px] text-green-600">−{fmt(discount)}</span>
                     </div>
                   )}
                   <div className="flex justify-between px-4 py-3 bg-black/1.5">
@@ -799,26 +690,45 @@ const OrderDetailsModal = ({ orderId, onClose }: OrderDetailsModalProps) => {
               {details.statusHistory && details.statusHistory.length > 0 && (
                 <div>
                   <SectionLabel>Status History</SectionLabel>
-                  <div className="space-y-2">
-                    {details.statusHistory.map((entry, idx) => (
+                  <div className="border border-black/08 divide-y divide-black/4">
+                    {[...details.statusHistory].reverse().map((entry, idx) => (
                       <div
                         key={idx}
-                        className="flex items-start gap-3 text-[11px]"
+                        className="flex items-start gap-3 px-4 py-3 text-[11px]"
                       >
                         <div className="w-1.5 h-1.5 rounded-full bg-black/20 mt-1.5 shrink-0" />
-                        <div className="flex-1">
-                          <span className="font-medium text-black/70 uppercase tracking-wider text-[10px]">
-                            {entry.status}
-                          </span>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-black/70 text-[11px]">
+                            {entry.label || entry.status}
+                          </p>
                           {entry.note && (
-                            <span className="text-black/40"> · {entry.note}</span>
+                            <p className="text-black/40 text-[10px] mt-0.5 leading-relaxed">
+                              {entry.note}
+                            </p>
                           )}
                         </div>
-                        <span className="text-black/30 shrink-0">
+                        <span className="text-black/30 shrink-0 text-[10px]">
                           {fmtDateTime(entry.timestamp)}
                         </span>
                       </div>
                     ))}
+                  </div>
+                </div>
+              )}
+
+              {/* ── Cancellation ────────────────────────────────────────── */}
+              {details.cancellationReason && (
+                <div>
+                  <SectionLabel>Cancellation</SectionLabel>
+                  <div className="border border-red-200 bg-red-50 px-4 py-3">
+                    <p className="text-[11px] text-red-700 leading-relaxed">
+                      {details.cancellationReason}
+                    </p>
+                    {details.cancelledAt && (
+                      <p className="text-[10px] text-red-400 mt-1">
+                        {fmtDateTime(details.cancelledAt)}
+                      </p>
+                    )}
                   </div>
                 </div>
               )}
@@ -830,9 +740,9 @@ const OrderDetailsModal = ({ orderId, onClose }: OrderDetailsModalProps) => {
                   <SectionLabel>Notes</SectionLabel>
                 </div>
                 <div className="border border-black/08 px-4 py-3 min-h-[56px]">
-                  {details.notes || details.adminNotes ? (
+                  {details.notes ? (
                     <p className="text-[11px] text-black/60 leading-relaxed">
-                      {details.notes || details.adminNotes}
+                      {details.notes}
                     </p>
                   ) : (
                     <p className="text-[11px] text-black/25 italic">
@@ -842,40 +752,25 @@ const OrderDetailsModal = ({ orderId, onClose }: OrderDetailsModalProps) => {
                 </div>
               </div>
 
-              {/* ── Meta IDs ───────────────────────────────────────────── */}
+              {/* ── Reference IDs ──────────────────────────────────────── */}
               <div>
                 <div className="flex items-center gap-1.5 mb-3">
                   <Hash className="w-3.5 h-3.5 text-black/30" />
                   <SectionLabel>Reference IDs</SectionLabel>
                 </div>
                 <div className="border border-black/08 p-4 space-y-0.5">
-                  <InfoRow label="Order ID" value={orderId} mono copyable />
-                  {details._id && details._id !== orderId && (
+                  <InfoRow label="Order ID" value={details.id || orderId} mono copyable />
+                  {details._id && (
                     <InfoRow label="DB ID" value={details._id} mono copyable />
                   )}
-                  {details.orderNumber && (
-                    <InfoRow
-                      label="Order No."
-                      value={details.orderNumber}
-                      mono
-                      copyable
-                    />
-                  )}
                   {details.paymentReference && (
-                    <InfoRow
-                      label="Payment Ref"
-                      value={details.paymentReference}
-                      mono
-                      copyable
-                    />
+                    <InfoRow label="Payment Ref" value={details.paymentReference} mono copyable />
+                  )}
+                  {details.txRef && (
+                    <InfoRow label="Tx Ref" value={details.txRef} mono copyable />
                   )}
                   {details.trackingNumber && (
-                    <InfoRow
-                      label="Tracking"
-                      value={details.trackingNumber}
-                      mono
-                      copyable
-                    />
+                    <InfoRow label="Tracking" value={details.trackingNumber} mono copyable />
                   )}
                 </div>
               </div>
@@ -887,13 +782,18 @@ const OrderDetailsModal = ({ orderId, onClose }: OrderDetailsModalProps) => {
                   <SectionLabel>Timestamps</SectionLabel>
                 </div>
                 <div className="border border-black/08 p-4 space-y-0.5">
-                  <InfoRow label="Placed" value={fmtDateTime(createdAt)} />
-                  <InfoRow label="Last Updated" value={fmtDateTime(updatedAt)} />
-                  {details.estimatedDelivery && (
-                    <InfoRow
-                      label="Est. Delivery"
-                      value={fmtDate(details.estimatedDelivery)}
-                    />
+                  <InfoRow label="Order Date" value={fmtDate(details.date)} />
+                  {details.shippedAt && (
+                    <InfoRow label="Shipped" value={fmtDate(details.shippedAt)} />
+                  )}
+                  {details.deliveredAt && (
+                    <InfoRow label="Delivered" value={fmtDate(details.deliveredAt)} />
+                  )}
+                  {details.paidAt && (
+                    <InfoRow label="Paid" value={fmtDateTime(details.paidAt)} />
+                  )}
+                  {details.updatedAt && (
+                    <InfoRow label="Last Updated" value={fmtDate(details.updatedAt)} />
                   )}
                 </div>
               </div>
@@ -920,15 +820,13 @@ const OrderDetailsModal = ({ orderId, onClose }: OrderDetailsModalProps) => {
             >
               <div className="flex items-center gap-3 mb-4">
                 <AlertCircle className="w-5 h-5 text-red-500 shrink-0" />
-                <h3 className="text-base font-light tracking-wide">
-                  Delete Order
-                </h3>
+                <h3 className="text-base font-light tracking-wide">Delete Order</h3>
               </div>
               <p className="text-xs text-black/60 mb-2 font-light leading-relaxed">
                 Are you sure you want to permanently delete this order?
               </p>
               <p className="text-[10px] font-mono text-black/40 bg-black/5 px-3 py-2 mb-6 break-all">
-                {orderId}
+                {details?.id || orderId}
               </p>
               <p className="text-[10px] text-red-500 mb-5">
                 This action cannot be undone.

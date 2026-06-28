@@ -19,7 +19,9 @@ import {
   RefreshCw,
 } from "lucide-react";
 import RowActionMenu from "../components/UI/RowActionMenu";
-import DataTableComponent, { type TableColumn } from "react-data-table-component";
+import DataTableComponent, {
+  type TableColumn,
+} from "react-data-table-component";
 import { AnimatePresence, motion } from "framer-motion";
 import StatCard from "../components/UI/StatCard";
 import Skeleton from "../components/UI/Skeleton";
@@ -183,7 +185,7 @@ const emptyEdit = { firstName: "", lastName: "", phone: "", role: "client" };
 
 const Staffs = () => {
   const [currentPage, setCurrentPage] = useState(1);
-  const [rowsPerPage, setRowsPerPage] = useState(20);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
   const [searchInput, setSearchInput] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
@@ -390,18 +392,50 @@ const Staffs = () => {
         cell: (row) => (
           <RowActionMenu
             actions={[
-              { icon: Eye, label: "View Details", onClick: () => setViewUserId(row.id) },
-              { icon: Edit, label: "Edit", onClick: () => handleOpenEdit(row), hidden: !row.actions?.canEdit },
-              { icon: UserX, label: "Deactivate", onClick: () => deactivateStaff.mutate(row.id), disabled: deactivateStaff.isPending, hidden: !row.actions?.canDeactivate },
-              { icon: UserCheck, label: "Activate", onClick: () => activateStaff.mutate(row.id), disabled: activateStaff.isPending, hidden: !row.actions?.canActivate },
-              { icon: Trash2, label: "Delete", onClick: () => setDeletingUser(row), destructive: true, hidden: !row.actions?.canDelete },
+              {
+                icon: Eye,
+                label: "View Details",
+                onClick: () => setViewUserId(row.id),
+              },
+              {
+                icon: Edit,
+                label: "Edit",
+                onClick: () => handleOpenEdit(row),
+                hidden: !row.actions?.canEdit,
+              },
+              {
+                icon: UserX,
+                label: "Deactivate",
+                onClick: () => deactivateStaff.mutate(row.id),
+                disabled: deactivateStaff.isPending,
+                hidden: !row.actions?.canDeactivate,
+              },
+              {
+                icon: UserCheck,
+                label: "Activate",
+                onClick: () => activateStaff.mutate(row.id),
+                disabled: activateStaff.isPending,
+                hidden: !row.actions?.canActivate,
+              },
+              {
+                icon: Trash2,
+                label: "Delete",
+                onClick: () => setDeletingUser(row),
+                destructive: true,
+                hidden: !row.actions?.canDelete,
+              },
             ]}
           />
         ),
       },
     ],
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [currentPage, rowsPerPage, deactivateStaff.isPending, activateStaff.isPending],
+    [
+      currentPage,
+      rowsPerPage,
+      deactivateStaff.isPending,
+      activateStaff.isPending,
+    ],
   );
 
   return (
@@ -462,10 +496,7 @@ const Staffs = () => {
         {/* Filters */}
         <div className="bg-white border border-black/10 p-4">
           <div className="flex flex-col sm:flex-row gap-3">
-            <form
-              onSubmit={handleSearch}
-              className="relative flex-1 max-w-sm"
-            >
+            <form onSubmit={handleSearch} className="relative flex-1 max-w-sm">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-black/30" />
               <input
                 type="text"
