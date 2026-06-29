@@ -177,10 +177,19 @@ const Signup = () => {
           navigate("/home");
         }, 500);
       } else {
-        toast.error("Registration failed. Missing user data or token.", {
+        // toast.error("Registration failed. Missing user data or token.", {
+        //   duration: 4000,
+        //   position: "bottom-right",
+        // });
+
+        toast.success(`Welcome to SYS EMPIRE, ${firstName}!`, {
           duration: 4000,
           position: "bottom-right",
         });
+
+        setTimeout(() => {
+          navigate("/home");
+        }, 500);
       }
     } catch (error: any) {
       const errorMessage =
