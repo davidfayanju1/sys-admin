@@ -17,7 +17,7 @@ import ProductFormModal from "../components/products/ProductFormModal";
 import DeleteConfirmModal from "../components/products/DeleteConfirmModal";
 import ProductDetailDrawer from "../components/products/ProductDetailDrawer";
 import type { Product, Variant } from "../types/product";
-import { isSizeEntryArray, getVariantSku, getVariantStock, getVariantSizeNames } from "../types/product";
+import { isSizeEntryArray, getVariantSku, getVariantStock, getVariantSizeNames, getCategoryId } from "../types/product";
 
 // Converts a new-format API variant (sizes: SizeEntry[]) to the flat form format
 const normalizeVariantForForm = (v: Variant): Variant => {
@@ -51,7 +51,7 @@ const transformProductToFormData = (product: Product) => {
     title: product.name || product.title || "",
     description: product.description || "",
     details: product.care || "",
-    category: product.category || "",
+    category: getCategoryId(product.category),
     status: (product.status === "published" ? "active" : product.status) as
       | "active"
       | "draft"
@@ -205,16 +205,19 @@ const Products = () => {
     }
 
     if (editingProduct) {
-      updateProduct.mutate({
-        id: editingProduct.id || editingProduct._id,
-        product: formData,
-      });
+      updateProduct.mutate(
+        {
+          id: editingProduct.id || editingProduct._id,
+          product: formData,
+        },
+        { onSuccess: closeModal },
+      );
     } else {
-      createProduct.mutate(formData);
+      createProduct.mutate(formData, { onSuccess: closeModal });
     }
-
-    closeModal();
   };
+
+  const isSavingProduct = createProduct.isPending || updateProduct.isPending;
 
   const handleDeleteProduct = () => {
     if (productToDelete) {
@@ -326,6 +329,7 @@ const Products = () => {
           onRemoveVariant={handleRemoveVariant}
           onClose={closeModal}
           onSave={handleSaveProduct}
+          isSaving={isSavingProduct}
         />
 
         {/* Delete Confirmation Modal */}

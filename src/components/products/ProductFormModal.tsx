@@ -1,10 +1,12 @@
 // components/products/ProductFormModal.tsx
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X } from "lucide-react";
+import { Loader2, Plus, X } from "lucide-react";
 import ImageUploadSection from "./ImageUploadSection";
 import VariantForm from "./VariantForm";
 import VariantTable from "./VariantTable";
 import type { Product, Variant } from "../../types/product";
+import { useCategories, useCreateCategory } from "../../hooks/useCategories";
 
 interface ProductFormModalProps {
   isOpen: boolean;
@@ -30,6 +32,7 @@ interface ProductFormModalProps {
   onRemoveVariant: (index: number) => void;
   onClose: () => void;
   onSave: () => void;
+  isSaving?: boolean;
 }
 
 const ProductFormModal = ({
@@ -47,7 +50,29 @@ const ProductFormModal = ({
   onRemoveVariant,
   onClose,
   onSave,
+  isSaving = false,
 }: ProductFormModalProps) => {
+  const { data: categories, isLoading: categoriesLoading } = useCategories();
+  const createCategory = useCreateCategory();
+  const [isAddingCategory, setIsAddingCategory] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState("");
+
+  const handleCreateCategory = () => {
+    const name = newCategoryName.trim();
+    if (!name) return;
+    createCategory.mutate(
+      { name, type: "fabric", isActive: true },
+      {
+        onSuccess: (res: any) => {
+          const created = res?.data ?? res;
+          setNewCategoryName("");
+          setIsAddingCategory(false);
+          onFormChange({ ...formData, category: created._id });
+        },
+      }
+    );
+  };
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -56,7 +81,7 @@ const ProductFormModal = ({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center overflow-y-auto py-8"
-          onClick={onClose}
+          onClick={isSaving ? undefined : onClose}
         >
           <motion.div
             initial={{ scale: 0.95, opacity: 0 }}
@@ -71,7 +96,8 @@ const ProductFormModal = ({
               </h3>
               <button
                 onClick={onClose}
-                className="p-1 hover:bg-gray-100 transition"
+                disabled={isSaving}
+                className="p-1 hover:bg-gray-100 transition disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -118,19 +144,74 @@ const ProductFormModal = ({
                     </select>
                   </div>
                   <div>
-                    <label className="block text-xs text-gray-500 mb-1">
-                      Category
-                    </label>
-                    <select
-                      value={formData.category || ""}
-                      onChange={(e) =>
-                        onFormChange({ ...formData, category: e.target.value })
-                      }
-                      className="w-full px-3 py-2 border border-gray-200 focus:border-black outline-none text-sm bg-white"
-                    >
-                      <option value="">No category</option>
-                      <option value="ready-to-wear">Ready to Wear</option>
-                    </select>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="block text-xs text-gray-500">
+                        Category
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => setIsAddingCategory((v) => !v)}
+                        className="flex items-center gap-1 text-[11px] text-gray-500 hover:text-black transition"
+                      >
+                        {isAddingCategory ? (
+                          <>
+                            <X className="w-3 h-3" />
+                            Cancel
+                          </>
+                        ) : (
+                          <>
+                            <Plus className="w-3 h-3" />
+                            New category
+                          </>
+                        )}
+                      </button>
+                    </div>
+                    {isAddingCategory ? (
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          autoFocus
+                          value={newCategoryName}
+                          onChange={(e) => setNewCategoryName(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              handleCreateCategory();
+                            }
+                          }}
+                          placeholder="New category name"
+                          className="w-full px-3 py-2 border border-gray-200 focus:border-black outline-none text-sm"
+                        />
+                        <button
+                          type="button"
+                          onClick={handleCreateCategory}
+                          disabled={
+                            !newCategoryName.trim() || createCategory.isPending
+                          }
+                          className="px-3 py-2 bg-black text-white text-xs whitespace-nowrap hover:bg-black/90 transition disabled:opacity-50"
+                        >
+                          {createCategory.isPending ? "Adding…" : "Add"}
+                        </button>
+                      </div>
+                    ) : (
+                      <select
+                        value={formData.category || ""}
+                        onChange={(e) =>
+                          onFormChange({ ...formData, category: e.target.value })
+                        }
+                        disabled={categoriesLoading}
+                        className="w-full px-3 py-2 border border-gray-200 focus:border-black outline-none text-sm bg-white disabled:opacity-50"
+                      >
+                        <option value="">
+                          {categoriesLoading ? "Loading…" : "No category"}
+                        </option>
+                        {(categories ?? []).map((cat) => (
+                          <option key={cat._id} value={cat._id}>
+                            {cat.name}
+                          </option>
+                        ))}
+                      </select>
+                    )}
                   </div>
                   <div className="md:col-span-2">
                     <label className="block text-xs text-gray-500 mb-1">
@@ -204,15 +285,24 @@ const ProductFormModal = ({
             <div className="p-5 border-t border-gray-200 flex justify-end gap-3 sticky bottom-0 bg-white z-10">
               <button
                 onClick={onClose}
-                className="px-4 py-2 border border-gray-200 text-gray-700 text-sm hover:border-black transition"
+                disabled={isSaving}
+                className="px-4 py-2 border border-gray-200 text-gray-700 text-sm hover:border-black transition disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 Cancel
               </button>
               <button
                 onClick={onSave}
-                className="px-4 py-2 bg-black text-white text-sm hover:bg-black/90 transition"
+                disabled={isSaving}
+                className="px-4 py-2 bg-black text-white text-sm hover:bg-black/90 transition disabled:opacity-60 disabled:cursor-not-allowed flex items-center gap-2"
               >
-                {editingProduct ? "Update Product" : "Create Product"}
+                {isSaving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                {isSaving
+                  ? editingProduct
+                    ? "Updating…"
+                    : "Creating…"
+                  : editingProduct
+                    ? "Update Product"
+                    : "Create Product"}
               </button>
             </div>
           </motion.div>

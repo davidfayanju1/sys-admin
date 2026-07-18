@@ -5,7 +5,7 @@ import DataTableComponent, {
   type TableColumn,
 } from "react-data-table-component";
 import type { Product } from "../../types/product";
-import { getVariantSizeNames, getVariantStock, getVariantMinPrice } from "../../types/product";
+import { getVariantSizeNames, getCategoryName } from "../../types/product";
 
 // Use the same pattern as Orders.tsx
 const DataTable = (DataTableComponent as any).default || DataTableComponent;
@@ -67,18 +67,9 @@ const ProductTable = ({
     }
   };
 
-  const getTotalStock = (product: Product) => {
-    if (product.variants && product.variants.length > 0) {
-      return product.variants.reduce((sum, v) => sum + getVariantStock(v), 0);
-    }
-    return product.stock || 0;
-  };
+  const getTotalStock = (product: Product) => product.stock || 0;
 
   const getPriceDisplay = (product: Product) => {
-    if (product.variants && product.variants.length > 0) {
-      const min = Math.min(...product.variants.map((v) => getVariantMinPrice(v) / 100));
-      return `₦${min.toLocaleString("en-NG", { minimumFractionDigits: 2 })}`;
-    }
     const price = product.finalPrice || product.price;
     return `₦${price.toLocaleString("en-NG", { minimumFractionDigits: 2 })}`;
   };
@@ -88,7 +79,9 @@ const ProductTable = ({
       return "No variants";
     }
     const colors = [...new Set(product.variants.map((v) => v.color))];
-    const sizes = [...new Set(product.variants.flatMap((v) => getVariantSizeNames(v)))];
+    const sizes = [
+      ...new Set(product.variants.flatMap((v) => getVariantSizeNames(v))),
+    ];
     return `${colors.length} color${colors.length !== 1 ? "s" : ""} • ${sizes.length} size${sizes.length !== 1 ? "s" : ""}`;
   };
 
@@ -153,13 +146,13 @@ const ProductTable = ({
     },
     {
       name: "Category",
-      selector: (row: Product) => row.category || "",
+      selector: (row: Product) => getCategoryName(row.category),
       sortable: true,
       width: "140px",
       cell: (row: Product) =>
-        row.category ? (
+        getCategoryName(row.category) ? (
           <span className="inline-flex px-2 py-0.5 text-[9px] uppercase tracking-wide font-medium bg-black/5 text-black/50">
-            {row.category}
+            {getCategoryName(row.category)}
           </span>
         ) : (
           <span className="text-xs text-black/30">—</span>
@@ -174,6 +167,7 @@ const ProductTable = ({
           {getPriceDisplay(row)}
         </span>
       ),
+      width: "150px",
     },
     {
       name: "Stock",
@@ -210,9 +204,18 @@ const ProductTable = ({
       cell: (row: Product) => (
         <RowActionMenu
           actions={[
-            { icon: PanelRightOpen, label: "View Details", onClick: () => onViewDetails(row) },
+            {
+              icon: PanelRightOpen,
+              label: "View Details",
+              onClick: () => onViewDetails(row),
+            },
             { icon: Edit, label: "Edit", onClick: () => onEdit(row) },
-            { icon: Trash2, label: "Delete", onClick: () => onDelete(row), destructive: true },
+            {
+              icon: Trash2,
+              label: "Delete",
+              onClick: () => onDelete(row),
+              destructive: true,
+            },
           ]}
         />
       ),

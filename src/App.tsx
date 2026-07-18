@@ -23,6 +23,7 @@ import Feedback from "./pages/feedback";
 import Messages from "./pages/messages";
 import Services from "./pages/services";
 import ExpensePage from "./pages/expense";
+import Collections from "./pages/collections";
 
 function App() {
   return (
@@ -170,6 +171,14 @@ function App() {
             element={
               <ProtectedRoute>
                 <Services />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/collections"
+            element={
+              <ProtectedRoute>
+                <Collections />
               </ProtectedRoute>
             }
           />

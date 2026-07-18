@@ -78,6 +78,29 @@ export interface ProductImage {
   id: string;
 }
 
+// API populates `category` with the full document on read, but expects a
+// plain Category ID string when creating/updating a product.
+export interface PopulatedCategory {
+  id: string;
+  name: string;
+  slug: string;
+  type: string;
+}
+
+export const getCategoryId = (
+  category: string | PopulatedCategory | null | undefined,
+): string => {
+  if (!category) return "";
+  return typeof category === "string" ? category : category.id;
+};
+
+export const getCategoryName = (
+  category: string | PopulatedCategory | null | undefined,
+): string => {
+  if (!category) return "";
+  return typeof category === "string" ? category : category.name;
+};
+
 export interface Rating {
   average: number;
   count: number;
@@ -91,7 +114,7 @@ export interface Product {
   sku: string;
   description: string;
   shortDescription: string;
-  category?: string | null;
+  category?: string | PopulatedCategory | null;
   categories: string[];
   price: number;
   finalPrice: number;
