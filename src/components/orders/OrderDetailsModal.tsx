@@ -210,7 +210,7 @@ const CustomSelect = ({
 
 const ORDER_STEPS = [
   { key: "pending", label: "Pending", icon: Clock },
-  { key: "confirmed", label: "Confirmed", icon: Package },
+  { key: "processing", label: "Processing", icon: Package },
   { key: "shipped", label: "Shipped", icon: Truck },
   { key: "delivered", label: "Delivered", icon: CheckCircle },
 ];
@@ -219,9 +219,7 @@ const OrderProgressTracker = ({ status }: { status: string }) => {
   const lower = status.toLowerCase();
   const isCancelled = lower === "cancelled";
 
-  // Map "processing" → "confirmed" for display
-  const mappedStatus = lower === "processing" ? "confirmed" : lower;
-  const currentIdx = ORDER_STEPS.findIndex((s) => s.key === mappedStatus);
+  const currentIdx = ORDER_STEPS.findIndex((s) => s.key === lower);
 
   if (isCancelled) {
     return (
@@ -308,7 +306,7 @@ const DrawerSkeleton = () => (
 
 const statusOptions = [
   { label: "Pending", value: "pending", className: "text-yellow-700 bg-yellow-50" },
-  { label: "Confirmed", value: "confirmed", className: "text-blue-700 bg-blue-50" },
+  { label: "Processing", value: "processing", className: "text-blue-700 bg-blue-50" },
   { label: "Shipped", value: "shipped", className: "text-purple-700 bg-purple-50" },
   { label: "Delivered", value: "delivered", className: "text-green-700 bg-green-50" },
   { label: "Cancelled", value: "cancelled", className: "text-red-700 bg-red-50" },
@@ -608,39 +606,85 @@ const OrderDetailsModal = ({ orderId, onClose }: OrderDetailsModalProps) => {
                       </span>
                     </div>
 
-                    {items.map((item, idx) => (
-                      <div
-                        key={item._id || idx}
-                        className="grid grid-cols-[1fr_auto_auto] gap-3 px-4 py-3 items-center"
-                      >
-                        {/* Name + meta */}
-                        <div className="min-w-0">
-                          <p className="text-[12px] text-black/80 font-medium truncate">
-                            {item.name}
-                          </p>
-                          <div className="flex flex-wrap gap-1.5 mt-1">
-                            <span className="text-[10px] text-black/40">
-                              {fmt(item.unitPrice)} × {item.quantity}
+                    {items.map((item, idx) => {
+                      const measurementEntries = item.measurements
+                        ? Object.entries(item.measurements).filter(([, v]) => v)
+                        : [];
+                      const showVariant =
+                        (item.size && item.size.toLowerCase() !== "custom") ||
+                        (item.color && item.color.toLowerCase() !== "custom");
+                      return (
+                        <div key={item._id || idx}>
+                          <div className="grid grid-cols-[1fr_auto_auto] gap-3 px-4 py-3 items-center">
+                            {/* Name + meta */}
+                            <div className="min-w-0">
+                              <p className="text-[12px] text-black/80 font-medium truncate">
+                                {item.name}
+                              </p>
+                              <div className="flex flex-wrap gap-1.5 mt-1">
+                                <span className="text-[10px] text-black/40">
+                                  {fmt(item.unitPrice)} × {item.quantity}
+                                </span>
+                                {showVariant && (
+                                  <span className="text-[10px] text-black/40">
+                                    {item.size && item.size.toLowerCase() !== "custom"
+                                      ? `Size: ${item.size}`
+                                      : null}
+                                    {item.size &&
+                                    item.size.toLowerCase() !== "custom" &&
+                                    item.color &&
+                                    item.color.toLowerCase() !== "custom"
+                                      ? " · "
+                                      : ""}
+                                    {item.color && item.color.toLowerCase() !== "custom"
+                                      ? `Color: ${item.color}`
+                                      : null}
+                                  </span>
+                                )}
+                                {item.isBespoke && (
+                                  <span className="text-[9px] uppercase tracking-wider px-1.5 py-0.5 bg-black/5 text-black/50">
+                                    Bespoke
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Qty */}
+                            <span className="text-[12px] text-black/60 text-right">
+                              {item.quantity}
                             </span>
-                            {item.isBespoke && (
-                              <span className="text-[9px] uppercase tracking-wider px-1.5 py-0.5 bg-black/5 text-black/50">
-                                Bespoke
-                              </span>
-                            )}
+
+                            {/* Subtotal */}
+                            <span className="text-[12px] font-medium text-black text-right min-w-[90px]">
+                              {fmt(item.subtotal)}
+                            </span>
                           </div>
+
+                          {/* Measurements — what the tailor needs to cut/sew this piece */}
+                          {item.isBespoke && measurementEntries.length > 0 && (
+                            <div className="px-4 pb-3 -mt-1">
+                              <div className="border border-black/8 bg-black/1.5 px-3 py-2.5">
+                                <p className="text-[9px] uppercase tracking-[0.15em] text-black/35 mb-2 font-medium">
+                                  Measurements
+                                </p>
+                                <div className="grid grid-cols-3 sm:grid-cols-4 gap-x-3 gap-y-1.5">
+                                  {measurementEntries.map(([label, value]) => (
+                                    <div key={label} className="min-w-0">
+                                      <p className="text-[9px] text-black/40 truncate">
+                                        {label}
+                                      </p>
+                                      <p className="text-[11px] font-medium text-black/75">
+                                        {value}
+                                      </p>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            </div>
+                          )}
                         </div>
-
-                        {/* Qty */}
-                        <span className="text-[12px] text-black/60 text-right">
-                          {item.quantity}
-                        </span>
-
-                        {/* Subtotal */}
-                        <span className="text-[12px] font-medium text-black text-right min-w-[90px]">
-                          {fmt(item.subtotal)}
-                        </span>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 ) : (
                   <p className="text-[11px] text-black/30 border border-black/8 px-4 py-5">
@@ -741,7 +785,7 @@ const OrderDetailsModal = ({ orderId, onClose }: OrderDetailsModalProps) => {
                 </div>
                 <div className="border border-black/08 px-4 py-3 min-h-[56px]">
                   {details.notes ? (
-                    <p className="text-[11px] text-black/60 leading-relaxed">
+                    <p className="text-[11px] text-black/60 leading-relaxed whitespace-pre-line">
                       {details.notes}
                     </p>
                   ) : (

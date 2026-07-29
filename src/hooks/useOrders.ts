@@ -4,11 +4,15 @@ import api from "../lib/axios";
 export interface OrderItem {
   _id: string;
   product: string; // product ID
+  slug?: string;
   name: string;
+  size?: string;
+  color?: string;
   quantity: number;
   unitPrice: number;
   subtotal: number;
   isBespoke: boolean;
+  measurements?: Record<string, string>;
 }
 
 export interface OrderAddress {
