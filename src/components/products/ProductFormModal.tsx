@@ -16,9 +16,11 @@ interface ProductFormModalProps {
     description: string;
     details: string;
     category: string;
+    gender: "" | "male" | "female";
     status: "active" | "draft" | "archived";
     primaryImage: string;
     secondaryImages: string[];
+    stock: number;
     variants: Variant[];
   };
   currentVariant: Omit<Variant, "id">;
@@ -69,7 +71,7 @@ const ProductFormModal = ({
           setIsAddingCategory(false);
           onFormChange({ ...formData, category: created._id });
         },
-      }
+      },
     );
   };
 
@@ -144,6 +146,43 @@ const ProductFormModal = ({
                     </select>
                   </div>
                   <div>
+                    <label className="block text-xs text-gray-500 mb-1">
+                      Gender
+                    </label>
+                    <select
+                      value={formData.gender || ""}
+                      onChange={(e) =>
+                        onFormChange({
+                          ...formData,
+                          gender: e.target.value as "" | "male" | "female",
+                        })
+                      }
+                      className="w-full px-3 py-2 border border-gray-200 focus:border-black outline-none text-sm bg-white"
+                    >
+                      <option value="">Unspecified</option>
+                      <option value="male">Male</option>
+                      <option value="female">Female</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs text-gray-500 mb-1">
+                      Stock
+                    </label>
+                    <input
+                      type="number"
+                      min={0}
+                      value={formData.stock || ""}
+                      onChange={(e) =>
+                        onFormChange({
+                          ...formData,
+                          stock: parseInt(e.target.value) || 0,
+                        })
+                      }
+                      className="w-full px-3 py-2 border border-gray-200 focus:border-black outline-none text-sm"
+                      placeholder="0"
+                    />
+                  </div>
+                  <div>
                     <div className="flex items-center justify-between mb-1">
                       <label className="block text-xs text-gray-500">
                         Category
@@ -197,7 +236,10 @@ const ProductFormModal = ({
                       <select
                         value={formData.category || ""}
                         onChange={(e) =>
-                          onFormChange({ ...formData, category: e.target.value })
+                          onFormChange({
+                            ...formData,
+                            category: e.target.value,
+                          })
                         }
                         disabled={categoriesLoading}
                         className="w-full px-3 py-2 border border-gray-200 focus:border-black outline-none text-sm bg-white disabled:opacity-50"
@@ -232,7 +274,7 @@ const ProductFormModal = ({
                   </div>
                   <div className="md:col-span-2">
                     <label className="block text-xs text-gray-500 mb-1">
-                      Details / Care Instructions
+                      Short Description
                     </label>
                     <textarea
                       value={formData.details || ""}
@@ -275,7 +317,9 @@ const ProductFormModal = ({
                 />
                 <VariantTable
                   variants={formData.variants || []}
-                  editingIndex={editingVariantIndex >= 0 ? editingVariantIndex : undefined}
+                  editingIndex={
+                    editingVariantIndex >= 0 ? editingVariantIndex : undefined
+                  }
                   onEditVariant={onEditVariant}
                   onRemoveVariant={onRemoveVariant}
                 />

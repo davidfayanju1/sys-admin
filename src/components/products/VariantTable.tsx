@@ -1,9 +1,11 @@
-import DataTableComponent, { type TableColumn } from "react-data-table-component";
+import DataTableComponent, {
+  type TableColumn,
+} from "react-data-table-component";
 
 const DataTable = (DataTableComponent as any).default || DataTableComponent;
 import { Trash2, Pencil } from "lucide-react";
 import type { Variant } from "../../types/product";
-import { getVariantSizeNames, getVariantStock, getVariantMinPrice } from "../../types/product";
+import { getVariantSizeNames, getVariantMinPrice } from "../../types/product";
 
 interface VariantTableProps {
   variants: Variant[];
@@ -85,25 +87,16 @@ const VariantTable = ({
       ),
     },
     {
-      name: "SKU",
-      selector: (row) => row.sku || "",
-      cell: (row) => (
-        <span className="font-mono text-xs text-gray-500">{row.sku || ""}</span>
-      ),
-    },
-    {
       name: "Price",
       selector: (row) => getVariantMinPrice(row),
       cell: (row) => (
         <span className="text-xs font-medium">
-          ₦{(getVariantMinPrice(row) / 100).toLocaleString("en-NG", { minimumFractionDigits: 2 })}
+          ₦
+          {(getVariantMinPrice(row) / 100).toLocaleString("en-NG", {
+            minimumFractionDigits: 2,
+          })}
         </span>
       ),
-    },
-    {
-      name: "Stock",
-      selector: (row) => getVariantStock(row),
-      cell: (row) => <span className="text-xs text-gray-600">{getVariantStock(row)}</span>,
     },
     {
       name: "Actions",
@@ -144,7 +137,8 @@ const VariantTable = ({
         customStyles={customStyles}
         conditionalRowStyles={[
           {
-            when: (row: Variant & { _index: number }) => editingIndex === row._index,
+            when: (row: Variant & { _index: number }) =>
+              editingIndex === row._index,
             style: {
               backgroundColor: "#fffbeb",
               borderLeft: "2px solid #f59e0b",

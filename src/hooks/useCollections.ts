@@ -90,7 +90,7 @@ interface CollectionsResponse {
 export const useCollections = (
   page: number = 1,
   limit: number = 20,
-  search: string = ""
+  search: string = "",
 ) => {
   return useQuery<CollectionsResponse>({
     queryKey: ["collections", page, limit, search],
@@ -118,7 +118,9 @@ export const useCreateCollection = () => {
       toast.success("Collection created");
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || "Failed to create collection");
+      toast.error(
+        error.response?.data?.message || "Failed to create collection",
+      );
     },
   });
 };
@@ -141,7 +143,9 @@ export const useUpdateCollection = () => {
       toast.success("Collection updated");
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || "Failed to update collection");
+      toast.error(
+        error.response?.data?.message || "Failed to update collection",
+      );
     },
   });
 };
@@ -158,7 +162,104 @@ export const useDeleteCollection = () => {
       toast.success("Collection deleted");
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || "Failed to delete collection");
+      toast.error(
+        error.response?.data?.message || "Failed to delete collection",
+      );
+    },
+  });
+};
+
+export interface CollectionCategoryRef {
+  id?: string;
+  name: string;
+  slug?: string;
+}
+
+export interface CollectionPieceRating {
+  average: number;
+  count: number;
+}
+
+export interface CollectionPieceCard {
+  id: string;
+  slug: string;
+  name: string;
+  price: number;
+  currency: string;
+  image: string;
+  category?: CollectionCategoryRef;
+  rating?: CollectionPieceRating;
+  inStock: boolean;
+}
+
+export const useCollectionProducts = (collectionId: string) => {
+  return useQuery<{ data: CollectionPieceCard[] }>({
+    queryKey: ["collection-products", collectionId],
+    queryFn: async () => {
+      const response = await api.get(`/collections/${collectionId}/products`);
+      return response.data;
+    },
+    enabled: !!collectionId,
+  });
+};
+
+export const useAttachProductsToCollection = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      id,
+      productIds,
+    }: {
+      id: string;
+      productIds: string[];
+    }) => {
+      const response = await api.post(`/collections/${id}/products`, {
+        productIds,
+      });
+      return response.data;
+    },
+    onSuccess: (_data, { id, productIds }) => {
+      queryClient.invalidateQueries({ queryKey: ["collection-products", id] });
+      queryClient.invalidateQueries({ queryKey: ["collections"] });
+      toast.success(
+        productIds.length > 1
+          ? `${productIds.length} products added to collection`
+          : "Product added to collection",
+      );
+    },
+    onError: (error: any) => {
+      toast.error(
+        error.response?.data?.message || "Failed to add product to collection",
+      );
+    },
+  });
+};
+
+export const useDetachProductFromCollection = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      id,
+      productId,
+    }: {
+      id: string;
+      productId: string;
+    }) => {
+      const response = await api.delete(
+        `/collections/${id}/products/${productId}`,
+      );
+      return response.data;
+    },
+    onSuccess: (_data, { id }) => {
+      queryClient.invalidateQueries({ queryKey: ["collection-products", id] });
+      queryClient.invalidateQueries({ queryKey: ["collections"] });
+      toast.success("Product removed from collection");
+    },
+    onError: (error: any) => {
+      toast.error(
+        error.response?.data?.message ||
+          "Failed to remove product from collection",
+      );
     },
   });
 };
@@ -175,7 +276,9 @@ export const useToggleCollectionFeatured = () => {
       toast.success("Featured status updated");
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.message || "Failed to update featured status");
+      toast.error(
+        error.response?.data?.message || "Failed to update featured status",
+      );
     },
   });
 };

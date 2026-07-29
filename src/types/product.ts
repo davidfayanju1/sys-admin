@@ -132,6 +132,7 @@ export interface Product {
   secondaryImages?: string[];
   materials: string[];
   tags: string[];
+  gender?: "male" | "female";
   status: "published" | "draft" | "archived" | "active";
   featured: boolean;
   views: number;

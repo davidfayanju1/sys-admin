@@ -109,7 +109,7 @@ export const useOrders = (
       const params = new URLSearchParams({
         page: page.toString(),
         limit: limit.toString(),
-        ...(search ? { search } : {}),
+        ...(search ? { q: search } : {}),
         ...(status && status !== "all" ? { status } : {}),
       });
       const response = await api.get(`/orders?${params.toString()}`);

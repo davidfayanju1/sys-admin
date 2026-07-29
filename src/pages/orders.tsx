@@ -12,6 +12,8 @@ import {
   ShoppingBag,
   Eye,
   Filter,
+  Copy,
+  Check,
 } from "lucide-react";
 import DataTableComponent, {
   type TableColumn,
@@ -19,6 +21,7 @@ import DataTableComponent, {
 import RowActionMenu from "../components/UI/RowActionMenu";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
+import { toast } from "sonner";
 import { useOrders, useOrderSummary, type Order } from "../hooks/useOrders";
 import OrderDetailsModal from "../components/orders/OrderDetailsModal";
 import StatCard from "../components/UI/StatCard";
@@ -37,41 +40,46 @@ const STATUS_FILTERS = [
 ];
 
 const StatusBadge = ({ status }: { status: string }) => {
-  const config: Record<string, { icon: any; label: string; className: string }> =
-    {
-      pending: {
-        icon: Clock,
-        label: "Pending",
-        className: "bg-yellow-100 text-yellow-700",
-      },
-      processing: {
-        icon: Package,
-        label: "Processing",
-        className: "bg-blue-100 text-blue-700",
-      },
-      shipped: {
-        icon: Truck,
-        label: "Shipped",
-        className: "bg-purple-100 text-purple-700",
-      },
-      delivered: {
-        icon: CheckCircle,
-        label: "Delivered",
-        className: "bg-green-100 text-green-700",
-      },
-      cancelled: {
-        icon: XCircle,
-        label: "Cancelled",
-        className: "bg-red-100 text-red-700",
-      },
-    };
-
-  const { icon: Icon, label, className } =
-    config[status.toLowerCase()] || {
+  const config: Record<
+    string,
+    { icon: any; label: string; className: string }
+  > = {
+    pending: {
       icon: Clock,
-      label: status,
-      className: "bg-gray-100 text-gray-700",
-    };
+      label: "Pending",
+      className: "bg-yellow-100 text-yellow-700",
+    },
+    processing: {
+      icon: Package,
+      label: "Processing",
+      className: "bg-blue-100 text-blue-700",
+    },
+    shipped: {
+      icon: Truck,
+      label: "Shipped",
+      className: "bg-purple-100 text-purple-700",
+    },
+    delivered: {
+      icon: CheckCircle,
+      label: "Delivered",
+      className: "bg-green-100 text-green-700",
+    },
+    cancelled: {
+      icon: XCircle,
+      label: "Cancelled",
+      className: "bg-red-100 text-red-700",
+    },
+  };
+
+  const {
+    icon: Icon,
+    label,
+    className,
+  } = config[status.toLowerCase()] || {
+    icon: Clock,
+    label: status,
+    className: "bg-gray-100 text-gray-700",
+  };
 
   return (
     <span
@@ -90,14 +98,45 @@ const PaymentBadge = ({ status }: { status: string }) => {
     failed: "bg-red-100 text-red-700",
     refunded: "bg-gray-100 text-gray-600",
   };
-  const className =
-    config[status.toLowerCase()] || "bg-gray-100 text-gray-700";
+  const className = config[status.toLowerCase()] || "bg-gray-100 text-gray-700";
   return (
     <span
       className={`inline-flex px-2 py-1 text-[9px] uppercase tracking-wide font-medium ${className}`}
     >
       {status}
     </span>
+  );
+};
+
+const CopyableId = ({ value }: { value: string }) => {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopied(true);
+      toast.success("Order ID copied");
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      toast.error("Could not copy Order ID");
+    }
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={handleCopy}
+      title="Copy Order ID"
+      className="group flex items-center gap-1.5 text-[10px] font-mono text-black/50 hover:text-black transition min-w-0"
+    >
+      <span className="truncate">{value}</span>
+      {copied ? (
+        <Check className="w-3 h-3 shrink-0 text-green-600" />
+      ) : (
+        <Copy className="w-3 h-3 shrink-0 opacity-0 group-hover:opacity-100 transition" />
+      )}
+    </button>
   );
 };
 
@@ -170,7 +209,7 @@ const Orders = () => {
   const [searchInput, setSearchInput] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
-  const [rowsPerPage, setRowsPerPage] = useState(20);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
 
   const { data: ordersResponse, isLoading: ordersLoading } = useOrders(
@@ -219,13 +258,11 @@ const Orders = () => {
       },
       {
         name: "Order ID",
-        selector: (row) => row._id || row.id,
+        selector: (row) => row.orderNumber || row.id || row._id,
         sortable: true,
         width: "160px",
         cell: (row) => (
-          <span className="text-[10px] font-mono text-black/50 truncate">
-            {row.orderNumber || row._id || row.id}
-          </span>
+          <CopyableId value={row.orderNumber || row.id || row._id} />
         ),
       },
       {
@@ -262,7 +299,9 @@ const Orders = () => {
         center: true,
         width: "70px",
         cell: (row) => (
-          <span className="text-xs text-black/50 font-light">{row.items ?? "—"}</span>
+          <span className="text-xs text-black/50 font-light">
+            {row.items ?? "—"}
+          </span>
         ),
       },
       {
@@ -326,10 +365,18 @@ const Orders = () => {
     autoTable(doc, {
       startY: statusFilter !== "all" ? 34 : 28,
       head: [
-        ["Order ID", "Customer", "Date", "Items", "Amount (₦)", "Status", "Payment"],
+        [
+          "Order ID",
+          "Customer",
+          "Date",
+          "Items",
+          "Amount (₦)",
+          "Status",
+          "Payment",
+        ],
       ],
       body: orders.map((o) => [
-        o.orderNumber || o._id || o.id,
+        o.orderNumber || o.id || o._id,
         o.customer || "—",
         o.date
           ? new Date(o.date).toLocaleDateString("en-GB", {

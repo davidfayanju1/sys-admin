@@ -1,16 +1,21 @@
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Upload, Plus, Trash2, RefreshCw } from "lucide-react";
+import { X, Upload, Plus, Trash2, RefreshCw, PackageSearch } from "lucide-react";
 import { useUploadMedia } from "../../hooks/useMedia";
 import { toast } from "sonner";
-import type {
-  Collection,
-  CollectionPiece,
-  CollectionColor,
-  CollectionImage,
-  CreateCollectionPayload,
-  UpdateCollectionPayload,
+import {
+  useCollectionProducts,
+  useAttachProductsToCollection,
+  useDetachProductFromCollection,
+  type Collection,
+  type CollectionPiece,
+  type CollectionColor,
+  type CollectionImage,
+  type CreateCollectionPayload,
+  type UpdateCollectionPayload,
 } from "../../hooks/useCollections";
+import ProductPickerModal from "./ProductPickerModal";
+import type { Product } from "../../types/product";
 
 interface Props {
   isOpen: boolean;
@@ -78,16 +83,26 @@ const CollectionFormModal = ({
   onClose,
   isLoading,
 }: Props) => {
-  const [activeTab, setActiveTab] = useState<"collection" | "piece">("collection");
+  const [activeTab, setActiveTab] = useState<"collection" | "piece" | "products">(
+    "collection"
+  );
   const [col, setColData] = useState(EMPTY_COLLECTION);
   const [piece, setPieceData] = useState<CollectionPiece>(EMPTY_PIECE);
   const [includePiece, setIncludePiece] = useState(false);
   const [careInput, setCareInput] = useState("");
   const [newColor, setNewColor] = useState<CollectionColor>({ name: "", hex: "#000000" });
+  const [productPickerOpen, setProductPickerOpen] = useState(false);
 
   const coverRef = useRef<HTMLInputElement>(null);
   const pieceImgRef = useRef<HTMLInputElement>(null);
   const uploadMedia = useUploadMedia();
+
+  const collectionId = editingCollection?._id || editingCollection?.id || "";
+  const { data: collectionProductsData, isLoading: isLoadingCollectionProducts } =
+    useCollectionProducts(collectionId);
+  const attachProducts = useAttachProductsToCollection();
+  const detachProduct = useDetachProductFromCollection();
+  const attachedProducts = collectionProductsData?.data ?? [];
 
   useEffect(() => {
     if (!isOpen) return;
@@ -185,6 +200,20 @@ const CollectionFormModal = ({
         : [...piece.sizes, size]
     );
 
+  const handleSelectProducts = (products: Product[]) => {
+    setProductPickerOpen(false);
+    if (!collectionId) return;
+    attachProducts.mutate({
+      id: collectionId,
+      productIds: products.map((p) => p.id),
+    });
+  };
+
+  const handleDetachProduct = (productId: string) => {
+    if (!collectionId) return;
+    detachProduct.mutate({ id: collectionId, productId });
+  };
+
   // Images
   const updateImage = (i: number, key: keyof CollectionImage, value: any) => {
     const updated = piece.images.map((img, idx) => {
@@ -274,7 +303,7 @@ const CollectionFormModal = ({
 
             {/* Tabs */}
             <div className="flex border-b border-black/10 shrink-0">
-              {(["collection", "piece"] as const).map((tab) => (
+              {(["collection", "piece", "products"] as const).map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
@@ -286,7 +315,11 @@ const CollectionFormModal = ({
                 >
                   {tab === "collection"
                     ? "Collection"
-                    : `Piece${includePiece ? " ✓" : " (optional)"}`}
+                    : tab === "piece"
+                    ? `Piece${includePiece ? " ✓" : " (optional)"}`
+                    : `Products${
+                        attachedProducts.length ? ` (${attachedProducts.length})` : ""
+                      }`}
                 </button>
               ))}
             </div>
@@ -825,6 +858,82 @@ const CollectionFormModal = ({
                   )}
                 </div>
               )}
+
+              {/* ── Products Tab ───────────────────────────────────────── */}
+              {activeTab === "products" && (
+                <div className="space-y-4">
+                  {!collectionId ? (
+                    <div className="py-12 text-center">
+                      <p className="text-xs text-black/40 tracking-wide max-w-xs mx-auto">
+                        Save the collection first, then reopen it here to
+                        attach existing products.
+                      </p>
+                    </div>
+                  ) : (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => setProductPickerOpen(true)}
+                        className="w-full py-3 border border-dashed border-black/20 text-[10px] uppercase tracking-widest text-black/40 hover:border-black/40 hover:text-black/60 transition flex items-center justify-center gap-2"
+                      >
+                        <PackageSearch className="w-3.5 h-3.5" />
+                        Add Product
+                      </button>
+
+                      {isLoadingCollectionProducts ? (
+                        <div className="py-8 text-center">
+                          <RefreshCw className="w-4 h-4 animate-spin mx-auto text-black/30" />
+                        </div>
+                      ) : attachedProducts.length === 0 ? (
+                        <div className="py-8 text-center">
+                          <p className="text-xs text-black/40 tracking-wide">
+                            No products attached to this collection yet.
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          {attachedProducts.map((p) => (
+                            <div
+                              key={p.id}
+                              className="flex items-center gap-3 p-3 border border-black/8"
+                            >
+                              <img
+                                src={
+                                  p.image ||
+                                  "https://placehold.co/200x200/e2e8f0/64748b?text=No+Image"
+                                }
+                                alt={p.name}
+                                className="w-12 h-12 object-cover bg-black/5 shrink-0"
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).src =
+                                    "https://placehold.co/200x200/e2e8f0/64748b?text=No+Image";
+                                }}
+                              />
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-light text-black truncate">
+                                  {p.name}
+                                </p>
+                                <p className="text-[10px] text-black/40 mt-0.5">
+                                  {p.currency} {p.price?.toLocaleString()}
+                                  {p.category?.name && ` · ${p.category.name}`}
+                                </p>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => handleDetachProduct(p.id)}
+                                disabled={detachProduct.isPending}
+                                className="text-black/30 hover:text-red-500 transition disabled:opacity-40"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Footer */}
@@ -851,6 +960,11 @@ const CollectionFormModal = ({
           </motion.div>
         </motion.div>
       )}
+      <ProductPickerModal
+        isOpen={productPickerOpen}
+        onClose={() => setProductPickerOpen(false)}
+        onSelect={handleSelectProducts}
+      />
     </AnimatePresence>
   );
 

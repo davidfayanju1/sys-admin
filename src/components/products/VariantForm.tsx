@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { PlusCircle, Wand2, X, HelpCircle, Check } from "lucide-react";
+import { PlusCircle, X, HelpCircle, Check } from "lucide-react";
 import type { Variant } from "../../types/product";
 
 export const SIZES = ["SM", "MD", "LG", "L", "XL", "2XL", "3XL"] as const;
@@ -13,13 +13,6 @@ const SIZE_GUIDE = [
   { size: "2XL", chest: "127–132", waist: "111–116", hips: "127–132"},
   { size: "3XL", chest: "137–142", waist: "121–126", hips: "137–142"},
 ];
-
-const generateSKU = (color: string, sizes: string[]): string => {
-  const c = (color || "XXX").replace(/\s+/g, "").slice(0, 3).toUpperCase().padEnd(3, "X");
-  const s = sizes.length > 0 ? sizes[0].replace(/[^A-Z0-9]/gi, "").toUpperCase().slice(0, 3) : "XX";
-  const rand = Math.random().toString(36).slice(2, 6).toUpperCase();
-  return `${c}-${s}-${rand}`;
-};
 
 interface VariantFormProps {
   variant: Omit<Variant, "id">;
@@ -178,67 +171,21 @@ const VariantForm = ({
           )}
         </div>
 
-        {/* SKU + Price + Stock */}
-        <div className="grid grid-cols-3 gap-3">
-          <div>
-            <label className="block text-[10px] uppercase tracking-wider text-gray-400 mb-1">
-              SKU
-            </label>
-            <div className="flex">
-              <input
-                type="text"
-                placeholder="Auto or type…"
-                value={variant.sku}
-                onChange={(e) => onVariantChange({ ...variant, sku: e.target.value })}
-                className="flex-1 min-w-0 px-3 py-2 border border-gray-200 border-r-0 focus:border-black outline-none text-sm font-mono"
-              />
-              <button
-                type="button"
-                title="Generate SKU"
-                onClick={() =>
-                  onVariantChange({
-                    ...variant,
-                    sku: generateSKU(variant.color, selectedSizes),
-                  })
-                }
-                className="px-2.5 border border-gray-200 bg-gray-50 hover:bg-black hover:text-white hover:border-black transition text-gray-500 shrink-0"
-              >
-                <Wand2 className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-[10px] uppercase tracking-wider text-gray-400 mb-1">
-              Price (₦)
-            </label>
-            <input
-              type="number"
-              placeholder="0"
-              min={0}
-              value={variant.price || ""}
-              onChange={(e) =>
-                onVariantChange({ ...variant, price: parseFloat(e.target.value) || 0 })
-              }
-              className={inputCls}
-            />
-          </div>
-
-          <div>
-            <label className="block text-[10px] uppercase tracking-wider text-gray-400 mb-1">
-              Stock
-            </label>
-            <input
-              type="number"
-              placeholder="0"
-              min={0}
-              value={variant.stock || ""}
-              onChange={(e) =>
-                onVariantChange({ ...variant, stock: parseInt(e.target.value) || 0 })
-              }
-              className={inputCls}
-            />
-          </div>
+        {/* Price */}
+        <div>
+          <label className="block text-[10px] uppercase tracking-wider text-gray-400 mb-1">
+            Price (₦)
+          </label>
+          <input
+            type="number"
+            placeholder="0"
+            min={0}
+            value={variant.price || ""}
+            onChange={(e) =>
+              onVariantChange({ ...variant, price: parseFloat(e.target.value) || 0 })
+            }
+            className={inputCls}
+          />
         </div>
 
         {/* Action */}

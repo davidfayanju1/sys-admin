@@ -17,7 +17,11 @@ import ProductFormModal from "../components/products/ProductFormModal";
 import DeleteConfirmModal from "../components/products/DeleteConfirmModal";
 import ProductDetailDrawer from "../components/products/ProductDetailDrawer";
 import type { Product, Variant } from "../types/product";
-import { isSizeEntryArray, getVariantSku, getVariantStock, getVariantSizeNames, getCategoryId } from "../types/product";
+import {
+  isSizeEntryArray,
+  getVariantSizeNames,
+  getCategoryId,
+} from "../types/product";
 
 // Converts a new-format API variant (sizes: SizeEntry[]) to the flat form format
 const normalizeVariantForForm = (v: Variant): Variant => {
@@ -28,15 +32,9 @@ const normalizeVariantForForm = (v: Variant): Variant => {
     _id: v._id,
     color: v.color,
     sizes: getVariantSizeNames(v),
-    sku: getVariantSku(v),
     price: firstSize?.price || 0,
     currency: firstSize?.currency || "NGN",
-    stock: getVariantStock(v),
     images: v.images || [],
-    reorderLevel: firstSize?.reorderLevel,
-    reorderQuantity: firstSize?.reorderQuantity,
-    location: firstSize?.location,
-    reservedStock: firstSize?.reservedStock || 0,
   };
 };
 
@@ -52,12 +50,14 @@ const transformProductToFormData = (product: Product) => {
     description: product.description || "",
     details: product.care || "",
     category: getCategoryId(product.category),
+    gender: (product.gender || "") as "" | "male" | "female",
     status: (product.status === "published" ? "active" : product.status) as
       | "active"
       | "draft"
       | "archived",
     primaryImage,
     secondaryImages,
+    stock: product.stock || 0,
     variants: (product.variants || []).map(normalizeVariantForForm),
   };
 };
@@ -79,19 +79,19 @@ const Products = () => {
     description: "",
     details: "",
     category: "",
+    gender: "" as "" | "male" | "female",
     status: "active" as "active" | "draft" | "archived",
     primaryImage: "",
     secondaryImages: [] as string[],
+    stock: 0,
     variants: [] as Variant[],
   });
 
   const [currentVariant, setCurrentVariant] = useState<Omit<Variant, "id">>({
     color: "",
     sizes: [],
-    sku: "",
     price: 0,
     currency: "NGN",
-    stock: 0,
     images: [],
   });
 
@@ -114,20 +114,14 @@ const Products = () => {
   const blankVariant = (): Omit<Variant, "id"> => ({
     color: "",
     sizes: [],
-    sku: "",
     price: 0,
     currency: "NGN",
-    stock: 0,
     images: [],
   });
 
   const handleAddVariant = () => {
-    if (
-      !currentVariant.color ||
-      !(currentVariant.sizes || []).length ||
-      !currentVariant.sku
-    ) {
-      toast.error("Please fill in color, at least one size, and SKU");
+    if (!currentVariant.color || !(currentVariant.sizes || []).length) {
+      toast.error("Please fill in color and at least one size");
       return;
     }
     const newVariant: Variant = {
@@ -144,22 +138,16 @@ const Products = () => {
     setCurrentVariant({
       color: v.color,
       sizes: getVariantSizeNames(v),
-      sku: getVariantSku(v),
       price: (v.price || 0) / 100,
       currency: v.currency || "NGN",
-      stock: getVariantStock(v),
       images: v.images || [],
     });
     setEditingVariantIdx(index);
   };
 
   const handleUpdateVariant = () => {
-    if (
-      !currentVariant.color ||
-      !(currentVariant.sizes || []).length ||
-      !currentVariant.sku
-    ) {
-      toast.error("Please fill in color, at least one size, and SKU");
+    if (!currentVariant.color || !(currentVariant.sizes || []).length) {
+      toast.error("Please fill in color and at least one size");
       return;
     }
     const updated = formData.variants.map((v, i) =>
@@ -204,16 +192,20 @@ const Products = () => {
       return;
     }
 
+    const payload = { ...formData, gender: formData.gender || undefined };
+
+    console.log(payload, "Product Payload");
+
     if (editingProduct) {
       updateProduct.mutate(
         {
           id: editingProduct.id || editingProduct._id,
-          product: formData,
+          product: payload,
         },
         { onSuccess: closeModal },
       );
     } else {
-      createProduct.mutate(formData, { onSuccess: closeModal });
+      createProduct.mutate(payload, { onSuccess: closeModal });
     }
   };
 
@@ -234,18 +226,18 @@ const Products = () => {
       description: "",
       details: "",
       category: "",
+      gender: "",
       status: "active",
       primaryImage: "",
       secondaryImages: [],
+      stock: 0,
       variants: [],
     });
     setCurrentVariant({
       color: "",
       sizes: [],
-      sku: "",
       price: 0,
       currency: "NGN",
-      stock: 0,
       images: [],
     });
   };
