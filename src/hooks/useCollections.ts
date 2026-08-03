@@ -42,6 +42,7 @@ export interface Collection {
   coverImage: string;
   featured: boolean;
   isPublished: boolean;
+  gender?: "" | "male" | "female";
   slug?: string;
   piece?: CollectionPiece;
   pieces?: CollectionPiece[];
@@ -58,6 +59,7 @@ export interface CreateCollectionPayload {
   coverImage?: string;
   featured: boolean;
   isPublished: boolean;
+  gender?: "male" | "female";
   piece?: Partial<CollectionPiece>;
 }
 
@@ -70,6 +72,7 @@ export interface UpdateCollectionPayload {
   coverImage?: string;
   featured?: boolean;
   isPublished?: boolean;
+  gender?: "male" | "female";
   piece?: Partial<CollectionPiece>;
 }
 

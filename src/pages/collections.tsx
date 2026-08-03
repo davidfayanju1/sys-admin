@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { AnimatePresence } from "framer-motion";
 import DashboardLayout from "../layout/DashboardLayout";
-import { Plus, Search, Star, StarOff, Pencil, Trash2, RefreshCw } from "lucide-react";
+import { Plus, Search, Star, StarOff, Pencil, Trash2, RefreshCw, Eye } from "lucide-react";
 import {
   useCollections,
   useCreateCollection,
@@ -13,6 +13,7 @@ import {
   type UpdateCollectionPayload,
 } from "../hooks/useCollections";
 import CollectionFormModal from "../components/collections/CollectionFormModal";
+import CollectionDetailDrawer from "../components/collections/CollectionDetailDrawer";
 import DeleteConfirmModal from "../components/collections/DeleteConfirmModal";
 import Skeleton from "../components/UI/Skeleton";
 
@@ -47,6 +48,7 @@ const Collections = () => {
   const [formOpen, setFormOpen] = useState(false);
   const [editingCollection, setEditingCollection] = useState<Collection | null>(null);
   const [deletingCollection, setDeletingCollection] = useState<Collection | null>(null);
+  const [viewingCollection, setViewingCollection] = useState<Collection | null>(null);
 
   const { data, isLoading, isFetching } = useCollections(page, 12, search);
   const createCollection = useCreateCollection();
@@ -71,6 +73,10 @@ const Collections = () => {
   const openEdit = (col: Collection) => {
     setEditingCollection(col);
     setFormOpen(true);
+  };
+
+  const openView = (col: Collection) => {
+    setViewingCollection(col);
   };
 
   const handleFormConfirm = (payload: CreateCollectionPayload | UpdateCollectionPayload) => {
@@ -165,6 +171,7 @@ const Collections = () => {
               <CollectionCard
                 key={col._id}
                 collection={col}
+                onView={() => openView(col)}
                 onEdit={() => openEdit(col)}
                 onDelete={() => setDeletingCollection(col)}
                 onToggleFeatured={() => toggleFeatured.mutate(col._id)}
@@ -222,12 +229,23 @@ const Collections = () => {
           />
         )}
       </AnimatePresence>
+
+      {/* Detail Drawer */}
+      <CollectionDetailDrawer
+        collection={viewingCollection}
+        onClose={() => setViewingCollection(null)}
+        onEdit={(col) => {
+          setViewingCollection(null);
+          openEdit(col);
+        }}
+      />
     </DashboardLayout>
   );
 };
 
 interface CardProps {
   collection: Collection;
+  onView: () => void;
   onEdit: () => void;
   onDelete: () => void;
   onToggleFeatured: () => void;
@@ -236,6 +254,7 @@ interface CardProps {
 
 const CollectionCard = ({
   collection,
+  onView,
   onEdit,
   onDelete,
   onToggleFeatured,
@@ -246,7 +265,10 @@ const CollectionCard = ({
   return (
     <div className="group border border-black/8 bg-white hover:border-black/20 transition-colors">
       {/* Cover */}
-      <div className="relative h-44 bg-black/3 overflow-hidden">
+      <div
+        className="relative h-44 bg-black/3 overflow-hidden cursor-pointer"
+        onClick={onView}
+      >
         {hasCover ? (
           <img
             src={collection.coverImage}
@@ -281,7 +303,20 @@ const CollectionCard = ({
         {/* Actions overlay */}
         <div className="absolute top-2.5 right-2.5 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
           <button
-            onClick={onToggleFeatured}
+            onClick={(e) => {
+              e.stopPropagation();
+              onView();
+            }}
+            title="View"
+            className="w-7 h-7 bg-white/90 hover:bg-white flex items-center justify-center transition shadow-sm"
+          >
+            <Eye className="w-3.5 h-3.5 text-black/60" />
+          </button>
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleFeatured();
+            }}
             disabled={isTogglingFeatured}
             title={collection.featured ? "Unfeature" : "Feature"}
             className="w-7 h-7 bg-white/90 hover:bg-white flex items-center justify-center transition shadow-sm disabled:opacity-50"
@@ -293,14 +328,20 @@ const CollectionCard = ({
             )}
           </button>
           <button
-            onClick={onEdit}
+            onClick={(e) => {
+              e.stopPropagation();
+              onEdit();
+            }}
             title="Edit"
             className="w-7 h-7 bg-white/90 hover:bg-white flex items-center justify-center transition shadow-sm"
           >
             <Pencil className="w-3.5 h-3.5 text-black/60" />
           </button>
           <button
-            onClick={onDelete}
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete();
+            }}
             title="Delete"
             className="w-7 h-7 bg-white/90 hover:bg-white flex items-center justify-center transition shadow-sm"
           >

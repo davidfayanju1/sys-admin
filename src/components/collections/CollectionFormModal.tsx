@@ -54,6 +54,7 @@ const EMPTY_COLLECTION = {
   coverImage: "",
   featured: false,
   isPublished: true,
+  gender: "" as "" | "male" | "female",
 };
 
 const inputCls =
@@ -120,6 +121,7 @@ const CollectionFormModal = ({
         coverImage: editingCollection.coverImage || "",
         featured: editingCollection.featured || false,
         isPublished: editingCollection.isPublished || false,
+        gender: editingCollection.gender || "",
       });
       const existingPiece =
         editingCollection.piece || editingCollection.pieces?.[0];
@@ -258,6 +260,7 @@ const CollectionFormModal = ({
     if (!validate()) return;
     const payload = {
       ...col,
+      gender: col.gender || undefined,
       ...(includePiece ? { piece } : {}),
     };
     onConfirm(payload);
@@ -418,6 +421,22 @@ const CollectionFormModal = ({
                         ))}
                       </select>
                     </div>
+                  </div>
+
+                  {/* Gender */}
+                  <div>
+                    <FieldLabel>Gender</FieldLabel>
+                    <select
+                      value={col.gender}
+                      onChange={(e) =>
+                        setCol("gender", e.target.value as "" | "male" | "female")
+                      }
+                      className={inputCls}
+                    >
+                      <option value="">Unspecified</option>
+                      <option value="male">Male</option>
+                      <option value="female">Female</option>
+                    </select>
                   </div>
 
                   {/* Tagline */}
