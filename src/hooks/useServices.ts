@@ -1,4 +1,9 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQuery,
+  useQueryClient,
+  keepPreviousData,
+} from "@tanstack/react-query";
 import api from "../lib/axios";
 
 export interface Service {
@@ -52,6 +57,7 @@ export const useServices = (page = 1, limit = 20, search = "") =>
           params: { page, limit, ...(search ? { search } : {}) },
         })
         .then((r) => r.data),
+    placeholderData: keepPreviousData,
   });
 
 export const useService = (id: string) =>

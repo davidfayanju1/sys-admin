@@ -1,4 +1,9 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  keepPreviousData,
+} from "@tanstack/react-query";
 import api from "../lib/axios";
 import { toast } from "sonner";
 
@@ -106,6 +111,7 @@ export const useCollections = (
       const response = await api.get(`/collections?${params.toString()}`);
       return response.data;
     },
+    placeholderData: keepPreviousData,
   });
 };
 

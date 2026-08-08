@@ -1,4 +1,9 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  keepPreviousData,
+} from "@tanstack/react-query";
 import api from "../lib/axios";
 
 export interface OrderItem {
@@ -119,6 +124,7 @@ export const useOrders = (
       const response = await api.get(`/orders?${params.toString()}`);
       return response.data;
     },
+    placeholderData: keepPreviousData,
   });
 };
 

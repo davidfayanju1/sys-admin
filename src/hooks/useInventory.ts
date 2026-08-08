@@ -1,4 +1,9 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  keepPreviousData,
+} from "@tanstack/react-query";
 import { inventoryService } from "../services/inventoryService";
 import type { CreateInventoryPayload } from "../types/inventory";
 import { toast } from "sonner";
@@ -15,6 +20,7 @@ export const useInventory = (
     queryKey: ["inventory", page, limit, search, status, location, category],
     queryFn: () => inventoryService.getInventory(page, limit, search, status, location, category),
     staleTime: 5 * 60 * 1000,
+    placeholderData: keepPreviousData,
   });
 };
 

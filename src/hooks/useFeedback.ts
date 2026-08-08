@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import api from "../lib/axios";
 
 export interface FeedbackItem {
@@ -63,6 +63,7 @@ export const useFeedback = (
       const response = await api.get(`/feedback?${params.toString()}`);
       return response.data;
     },
+    placeholderData: keepPreviousData,
   });
 };
 

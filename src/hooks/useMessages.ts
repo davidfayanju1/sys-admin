@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 
 export interface Message {
   _id: string;
@@ -194,6 +194,7 @@ export const useMessages = (
         meta: { total: filtered.length, page, limit },
       };
     },
+    placeholderData: keepPreviousData,
   });
 };
 

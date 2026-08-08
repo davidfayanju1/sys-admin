@@ -1,5 +1,5 @@
 // hooks/useCustomers.ts
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { customerService } from "../services/customerService";
 
 export const useCustomerSummary = () => {
@@ -20,6 +20,7 @@ export const useCustomers = (
     queryKey: ["customers", page, limit, search, status],
     queryFn: () => customerService.getCustomers(page, limit, search, status),
     staleTime: 5 * 60 * 1000,
+    placeholderData: keepPreviousData,
   });
 };
 

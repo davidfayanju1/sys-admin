@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, keepPreviousData } from "@tanstack/react-query";
 import api from "../lib/axios";
 
 export interface SendEmailPayload {
@@ -81,6 +81,7 @@ export const useAppointments = (
       const response = await api.get(`/appointments?${params.toString()}`);
       return response.data;
     },
+    placeholderData: keepPreviousData,
   });
 };
 

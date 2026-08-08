@@ -1,4 +1,9 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  keepPreviousData,
+} from "@tanstack/react-query";
 import { staffService } from "../services/staffService";
 import { toast } from "sonner";
 import type { CreateStaffPayload, UpdateStaffPayload } from "../types/staff";
@@ -21,6 +26,7 @@ export const useStaff = (
     queryKey: ["staff", page, limit, search, role, status],
     queryFn: () => staffService.getUsers(page, limit, search, role, status),
     staleTime: 2 * 60 * 1000,
+    placeholderData: keepPreviousData,
   });
 
 export const useStaffStats = () => {
