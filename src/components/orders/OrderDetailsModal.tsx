@@ -3,7 +3,6 @@ import { AnimatePresence, motion } from "framer-motion";
 import {
   X,
   AlertCircle,
-  Trash2,
   ChevronDown,
   Copy,
   Check,
@@ -25,7 +24,6 @@ import {
   useOrderDetails,
   useUpdateOrderStatus,
   useUpdateOrderPayment,
-  useDeleteOrder,
   type OrderDetail,
   type OrderAddress,
 } from "../../hooks/useOrders";
@@ -325,8 +323,7 @@ const OrderDetailsModal = ({ orderId, onClose }: OrderDetailsModalProps) => {
   const { data: orderDetailsData, isLoading, error } = useOrderDetails(orderId);
   const updateStatusMutation = useUpdateOrderStatus();
   const updatePaymentMutation = useUpdateOrderPayment();
-  const deleteOrderMutation = useDeleteOrder();
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [copiedId, setCopiedId] = useState(false);
 
   const details: OrderDetail | null =
@@ -357,14 +354,13 @@ const OrderDetailsModal = ({ orderId, onClose }: OrderDetailsModalProps) => {
     }
   };
 
-  const handleDelete = async () => {
+  const handleCancelOrder = async () => {
     try {
-      await deleteOrderMutation.mutateAsync(orderId);
-      toast.success("Order deleted");
-      setShowDeleteConfirm(false);
-      onClose();
+      await updateStatusMutation.mutateAsync({ id: orderId, status: "cancelled" });
+      toast.success("Order cancelled");
+      setShowCancelConfirm(false);
     } catch {
-      toast.error("Failed to delete order");
+      toast.error("Failed to cancel order");
     }
   };
 
@@ -420,12 +416,20 @@ const OrderDetailsModal = ({ orderId, onClose }: OrderDetailsModalProps) => {
           </div>
           <div className="flex items-center gap-1 shrink-0">
             <button
-              onClick={() => setShowDeleteConfirm(true)}
-              disabled={deleteOrderMutation.isPending || isLoading}
-              title="Delete order"
+              onClick={() => setShowCancelConfirm(true)}
+              disabled={
+                updateStatusMutation.isPending ||
+                isLoading ||
+                details?.status?.toLowerCase() === "cancelled"
+              }
+              title={
+                details?.status?.toLowerCase() === "cancelled"
+                  ? "Order already cancelled"
+                  : "Cancel order"
+              }
               className="p-2 hover:bg-red-50 hover:text-red-600 transition-colors text-black/40 rounded disabled:opacity-40"
             >
-              <Trash2 className="w-4 h-4" />
+              <XCircle className="w-4 h-4" />
             </button>
             <button
               onClick={onClose}
@@ -847,9 +851,9 @@ const OrderDetailsModal = ({ orderId, onClose }: OrderDetailsModalProps) => {
         </div>
       </motion.div>
 
-      {/* ── Delete Confirm ──────────────────────────────────────────────── */}
+      {/* ── Cancel Confirm ──────────────────────────────────────────────── */}
       <AnimatePresence>
-        {showDeleteConfirm && (
+        {showCancelConfirm && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -864,37 +868,37 @@ const OrderDetailsModal = ({ orderId, onClose }: OrderDetailsModalProps) => {
             >
               <div className="flex items-center gap-3 mb-4">
                 <AlertCircle className="w-5 h-5 text-red-500 shrink-0" />
-                <h3 className="text-base font-light tracking-wide">Delete Order</h3>
+                <h3 className="text-base font-light tracking-wide">Cancel Order</h3>
               </div>
               <p className="text-xs text-black/60 mb-2 font-light leading-relaxed">
-                Are you sure you want to permanently delete this order?
+                Are you sure you want to cancel this order?
               </p>
               <p className="text-[10px] font-mono text-black/40 bg-black/5 px-3 py-2 mb-6 break-all">
                 {details?.id || orderId}
               </p>
               <p className="text-[10px] text-red-500 mb-5">
-                This action cannot be undone.
+                This will set the order status to cancelled.
               </p>
               <div className="flex gap-3">
                 <button
-                  onClick={() => setShowDeleteConfirm(false)}
-                  disabled={deleteOrderMutation.isPending}
+                  onClick={() => setShowCancelConfirm(false)}
+                  disabled={updateStatusMutation.isPending}
                   className="flex-1 py-2.5 text-[11px] uppercase tracking-wider border border-black/10 hover:bg-black/5 transition-colors disabled:opacity-50"
                 >
-                  Cancel
+                  Back
                 </button>
                 <button
-                  onClick={handleDelete}
-                  disabled={deleteOrderMutation.isPending}
+                  onClick={handleCancelOrder}
+                  disabled={updateStatusMutation.isPending}
                   className="flex-1 py-2.5 text-[11px] uppercase tracking-wider bg-red-600 text-white hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
                 >
-                  {deleteOrderMutation.isPending ? (
+                  {updateStatusMutation.isPending ? (
                     <>
                       <RefreshCw className="w-3 h-3 animate-spin" />
-                      Deleting…
+                      Cancelling…
                     </>
                   ) : (
-                    "Delete Order"
+                    "Cancel Order"
                   )}
                 </button>
               </div>
