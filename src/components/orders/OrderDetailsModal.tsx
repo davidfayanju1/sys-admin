@@ -239,7 +239,10 @@ const OrderProgressTracker = ({ status }: { status: string }) => {
           const active = idx === currentIdx;
           const Icon = step.icon;
           return (
-            <div key={step.key} className="flex items-start flex-1 last:flex-none">
+            <div
+              key={step.key}
+              className="flex items-start flex-1 last:flex-none"
+            >
               <div className="flex flex-col items-center gap-1.5 min-w-0">
                 <div
                   className={`w-8 h-8 flex items-center justify-center border-2 transition-all ${
@@ -255,8 +258,8 @@ const OrderProgressTracker = ({ status }: { status: string }) => {
                     active
                       ? "text-black font-semibold"
                       : done
-                      ? "text-black/50"
-                      : "text-black/25"
+                        ? "text-black/50"
+                        : "text-black/25"
                   }`}
                 >
                   {step.label}
@@ -303,18 +306,46 @@ const DrawerSkeleton = () => (
 // ─── Status Options ───────────────────────────────────────────────────────────
 
 const statusOptions = [
-  { label: "Pending", value: "pending", className: "text-yellow-700 bg-yellow-50" },
-  { label: "Processing", value: "processing", className: "text-blue-700 bg-blue-50" },
-  { label: "Shipped", value: "shipped", className: "text-purple-700 bg-purple-50" },
-  { label: "Delivered", value: "delivered", className: "text-green-700 bg-green-50" },
-  { label: "Cancelled", value: "cancelled", className: "text-red-700 bg-red-50" },
+  {
+    label: "Pending",
+    value: "pending",
+    className: "text-yellow-700 bg-yellow-50",
+  },
+  {
+    label: "Processing",
+    value: "processing",
+    className: "text-blue-700 bg-blue-50",
+  },
+  {
+    label: "Shipped",
+    value: "shipped",
+    className: "text-purple-700 bg-purple-50",
+  },
+  {
+    label: "Delivered",
+    value: "delivered",
+    className: "text-green-700 bg-green-50",
+  },
+  {
+    label: "Cancelled",
+    value: "cancelled",
+    className: "text-red-700 bg-red-50",
+  },
 ];
 
 const paymentOptions = [
-  { label: "Pending", value: "pending", className: "text-yellow-700 bg-yellow-50" },
+  {
+    label: "Pending",
+    value: "pending",
+    className: "text-yellow-700 bg-yellow-50",
+  },
   { label: "Paid", value: "paid", className: "text-green-700 bg-green-50" },
   { label: "Failed", value: "failed", className: "text-red-700 bg-red-50" },
-  { label: "Refunded", value: "refunded", className: "text-gray-700 bg-gray-100" },
+  {
+    label: "Refunded",
+    value: "refunded",
+    className: "text-gray-700 bg-gray-100",
+  },
 ];
 
 // ─── Main Component ───────────────────────────────────────────────────────────
@@ -338,7 +369,10 @@ const OrderDetailsModal = ({ orderId, onClose }: OrderDetailsModalProps) => {
 
   const handleStatusChange = async (newStatus: string) => {
     try {
-      await updateStatusMutation.mutateAsync({ id: orderId, status: newStatus });
+      await updateStatusMutation.mutateAsync({
+        id: orderId,
+        status: newStatus,
+      });
       toast.success("Order status updated");
     } catch {
       toast.error("Failed to update status");
@@ -347,7 +381,10 @@ const OrderDetailsModal = ({ orderId, onClose }: OrderDetailsModalProps) => {
 
   const handlePaymentChange = async (newStatus: string) => {
     try {
-      await updatePaymentMutation.mutateAsync({ id: orderId, paymentStatus: newStatus });
+      await updatePaymentMutation.mutateAsync({
+        id: orderId,
+        paymentStatus: newStatus,
+      });
       toast.success("Payment status updated");
     } catch {
       toast.error("Failed to update payment status");
@@ -356,7 +393,10 @@ const OrderDetailsModal = ({ orderId, onClose }: OrderDetailsModalProps) => {
 
   const handleCancelOrder = async () => {
     try {
-      await updateStatusMutation.mutateAsync({ id: orderId, status: "cancelled" });
+      await updateStatusMutation.mutateAsync({
+        id: orderId,
+        status: "cancelled",
+      });
       toast.success("Order cancelled");
       setShowCancelConfirm(false);
     } catch {
@@ -410,7 +450,8 @@ const OrderDetailsModal = ({ orderId, onClose }: OrderDetailsModalProps) => {
             {details?.date && (
               <p className="text-[10px] text-black/30 mt-1">
                 Placed {fmtDate(details.date)}
-                {details.updatedAt && ` · Updated ${fmtDate(details.updatedAt)}`}
+                {details.updatedAt &&
+                  ` · Updated ${fmtDate(details.updatedAt)}`}
               </p>
             )}
           </div>
@@ -427,9 +468,9 @@ const OrderDetailsModal = ({ orderId, onClose }: OrderDetailsModalProps) => {
                   ? "Order already cancelled"
                   : "Cancel order"
               }
-              className="p-2 hover:bg-red-50 hover:text-red-600 transition-colors text-black/40 rounded disabled:opacity-40"
+              className="p-2 cursor-pointer underline-offset-2 text-[.7rem] underline text-red-500 transition-colors text-black/40 rounded disabled:opacity-40"
             >
-              <XCircle className="w-4 h-4" />
+              Cancel Order
             </button>
             <button
               onClick={onClose}
@@ -454,7 +495,9 @@ const OrderDetailsModal = ({ orderId, onClose }: OrderDetailsModalProps) => {
           ) : error ? (
             <div className="flex flex-col items-center justify-center h-64 gap-3">
               <AlertCircle className="w-8 h-8 text-red-400" />
-              <p className="text-sm text-black/50">Failed to load order details</p>
+              <p className="text-sm text-black/50">
+                Failed to load order details
+              </p>
             </div>
           ) : !details ? (
             <div className="flex flex-col items-center justify-center h-64">
@@ -462,19 +505,26 @@ const OrderDetailsModal = ({ orderId, onClose }: OrderDetailsModalProps) => {
             </div>
           ) : (
             <div className="p-6 space-y-8">
-
               {/* ── Info Grid ──────────────────────────────────────────── */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-
                 {/* Customer */}
                 <div className="border border-black/08 p-4 space-y-0.5">
                   <div className="flex items-center gap-1.5 mb-3">
                     <User className="w-3.5 h-3.5 text-black/30" />
                     <SectionLabel>Customer</SectionLabel>
                   </div>
-                  <InfoRow label="Name" value={details.customer?.name || dash} />
-                  <InfoRow label="Email" value={details.customer?.email || null} />
-                  <InfoRow label="Phone" value={details.customer?.phone || null} />
+                  <InfoRow
+                    label="Name"
+                    value={details.customer?.name || dash}
+                  />
+                  <InfoRow
+                    label="Email"
+                    value={details.customer?.email || null}
+                  />
+                  <InfoRow
+                    label="Phone"
+                    value={details.customer?.phone || null}
+                  />
                 </div>
 
                 {/* Shipping Address */}
@@ -486,12 +536,16 @@ const OrderDetailsModal = ({ orderId, onClose }: OrderDetailsModalProps) => {
                   {addressLines.length > 0 ? (
                     <div className="space-y-0.5">
                       {addressLines.map((line, i) => (
-                        <p key={i} className="text-[11px] text-black/70">{line}</p>
+                        <p key={i} className="text-[11px] text-black/70">
+                          {line}
+                        </p>
                       ))}
                     </div>
                   ) : (
                     <div className="space-y-0.5">
-                      <p className="text-[11px] text-black/30 italic">No address provided</p>
+                      <p className="text-[11px] text-black/30 italic">
+                        No address provided
+                      </p>
                       {details.shippingMethodLabel && (
                         <p className="text-[10px] text-black/40 mt-1 uppercase tracking-wider">
                           {details.shippingMethodLabel}
@@ -509,7 +563,11 @@ const OrderDetailsModal = ({ orderId, onClose }: OrderDetailsModalProps) => {
                   </div>
                   <InfoRow
                     label="Method"
-                    value={details.paymentMethodLabel || details.paymentMethod || null}
+                    value={
+                      details.paymentMethodLabel ||
+                      details.paymentMethod ||
+                      null
+                    }
                   />
                   <InfoRow
                     label="Reference"
@@ -518,11 +576,19 @@ const OrderDetailsModal = ({ orderId, onClose }: OrderDetailsModalProps) => {
                     copyable
                   />
                   {details.txRef && (
-                    <InfoRow label="Tx Ref" value={details.txRef} mono copyable />
+                    <InfoRow
+                      label="Tx Ref"
+                      value={details.txRef}
+                      mono
+                      copyable
+                    />
                   )}
                   <InfoRow label="Currency" value={details.currency || null} />
                   {details.paidAt && (
-                    <InfoRow label="Paid At" value={fmtDateTime(details.paidAt)} />
+                    <InfoRow
+                      label="Paid At"
+                      value={fmtDateTime(details.paidAt)}
+                    />
                   )}
                 </div>
 
@@ -534,7 +600,11 @@ const OrderDetailsModal = ({ orderId, onClose }: OrderDetailsModalProps) => {
                   </div>
                   <InfoRow
                     label="Delivery"
-                    value={details.shippingMethodLabel || details.shippingMethod || null}
+                    value={
+                      details.shippingMethodLabel ||
+                      details.shippingMethod ||
+                      null
+                    }
                   />
                   <InfoRow
                     label="Tracking No."
@@ -543,10 +613,16 @@ const OrderDetailsModal = ({ orderId, onClose }: OrderDetailsModalProps) => {
                     copyable
                   />
                   {details.shippedAt && (
-                    <InfoRow label="Shipped" value={fmtDate(details.shippedAt)} />
+                    <InfoRow
+                      label="Shipped"
+                      value={fmtDate(details.shippedAt)}
+                    />
                   )}
                   {details.deliveredAt && (
-                    <InfoRow label="Delivered" value={fmtDate(details.deliveredAt)} />
+                    <InfoRow
+                      label="Delivered"
+                      value={fmtDate(details.deliveredAt)}
+                    />
                   )}
                 </div>
               </div>
@@ -594,7 +670,9 @@ const OrderDetailsModal = ({ orderId, onClose }: OrderDetailsModalProps) => {
 
               {/* ── Order Items ─────────────────────────────────────────── */}
               <div>
-                <SectionLabel>Order Items ({items.length || dash})</SectionLabel>
+                <SectionLabel>
+                  Order Items ({items.length || dash})
+                </SectionLabel>
                 {items.length > 0 ? (
                   <div className="border border-black/10 divide-y divide-black/5">
                     {/* Table header */}
@@ -631,7 +709,8 @@ const OrderDetailsModal = ({ orderId, onClose }: OrderDetailsModalProps) => {
                                 </span>
                                 {showVariant && (
                                   <span className="text-[10px] text-black/40">
-                                    {item.size && item.size.toLowerCase() !== "custom"
+                                    {item.size &&
+                                    item.size.toLowerCase() !== "custom"
                                       ? `Size: ${item.size}`
                                       : null}
                                     {item.size &&
@@ -640,7 +719,8 @@ const OrderDetailsModal = ({ orderId, onClose }: OrderDetailsModalProps) => {
                                     item.color.toLowerCase() !== "custom"
                                       ? " · "
                                       : ""}
-                                    {item.color && item.color.toLowerCase() !== "custom"
+                                    {item.color &&
+                                    item.color.toLowerCase() !== "custom"
                                       ? `Color: ${item.color}`
                                       : null}
                                   </span>
@@ -703,10 +783,14 @@ const OrderDetailsModal = ({ orderId, onClose }: OrderDetailsModalProps) => {
                 <div className="border border-black/10 divide-y divide-black/5">
                   <div className="flex justify-between px-4 py-2.5">
                     <span className="text-[11px] text-black/50">Subtotal</span>
-                    <span className="text-[11px] text-black/70">{fmt(subtotal)}</span>
+                    <span className="text-[11px] text-black/70">
+                      {fmt(subtotal)}
+                    </span>
                   </div>
                   <div className="flex justify-between px-4 py-2.5">
-                    <span className="text-[11px] text-black/50">Shipping Fee</span>
+                    <span className="text-[11px] text-black/50">
+                      Shipping Fee
+                    </span>
                     <span className="text-[11px] text-black/70">
                       {shippingFee > 0 ? fmt(shippingFee) : "Free"}
                     </span>
@@ -714,13 +798,19 @@ const OrderDetailsModal = ({ orderId, onClose }: OrderDetailsModalProps) => {
                   {tax > 0 && (
                     <div className="flex justify-between px-4 py-2.5">
                       <span className="text-[11px] text-black/50">Tax</span>
-                      <span className="text-[11px] text-black/70">{fmt(tax)}</span>
+                      <span className="text-[11px] text-black/70">
+                        {fmt(tax)}
+                      </span>
                     </div>
                   )}
                   {discount > 0 && (
                     <div className="flex justify-between px-4 py-2.5">
-                      <span className="text-[11px] text-black/50">Discount</span>
-                      <span className="text-[11px] text-green-600">−{fmt(discount)}</span>
+                      <span className="text-[11px] text-black/50">
+                        Discount
+                      </span>
+                      <span className="text-[11px] text-green-600">
+                        −{fmt(discount)}
+                      </span>
                     </div>
                   )}
                   <div className="flex justify-between px-4 py-3 bg-black/1.5">
@@ -807,18 +897,38 @@ const OrderDetailsModal = ({ orderId, onClose }: OrderDetailsModalProps) => {
                   <SectionLabel>Reference IDs</SectionLabel>
                 </div>
                 <div className="border border-black/08 p-4 space-y-0.5">
-                  <InfoRow label="Order ID" value={details.id || orderId} mono copyable />
+                  <InfoRow
+                    label="Order ID"
+                    value={details.id || orderId}
+                    mono
+                    copyable
+                  />
                   {details._id && (
                     <InfoRow label="DB ID" value={details._id} mono copyable />
                   )}
                   {details.paymentReference && (
-                    <InfoRow label="Payment Ref" value={details.paymentReference} mono copyable />
+                    <InfoRow
+                      label="Payment Ref"
+                      value={details.paymentReference}
+                      mono
+                      copyable
+                    />
                   )}
                   {details.txRef && (
-                    <InfoRow label="Tx Ref" value={details.txRef} mono copyable />
+                    <InfoRow
+                      label="Tx Ref"
+                      value={details.txRef}
+                      mono
+                      copyable
+                    />
                   )}
                   {details.trackingNumber && (
-                    <InfoRow label="Tracking" value={details.trackingNumber} mono copyable />
+                    <InfoRow
+                      label="Tracking"
+                      value={details.trackingNumber}
+                      mono
+                      copyable
+                    />
                   )}
                 </div>
               </div>
@@ -832,20 +942,28 @@ const OrderDetailsModal = ({ orderId, onClose }: OrderDetailsModalProps) => {
                 <div className="border border-black/08 p-4 space-y-0.5">
                   <InfoRow label="Order Date" value={fmtDate(details.date)} />
                   {details.shippedAt && (
-                    <InfoRow label="Shipped" value={fmtDate(details.shippedAt)} />
+                    <InfoRow
+                      label="Shipped"
+                      value={fmtDate(details.shippedAt)}
+                    />
                   )}
                   {details.deliveredAt && (
-                    <InfoRow label="Delivered" value={fmtDate(details.deliveredAt)} />
+                    <InfoRow
+                      label="Delivered"
+                      value={fmtDate(details.deliveredAt)}
+                    />
                   )}
                   {details.paidAt && (
                     <InfoRow label="Paid" value={fmtDateTime(details.paidAt)} />
                   )}
                   {details.updatedAt && (
-                    <InfoRow label="Last Updated" value={fmtDate(details.updatedAt)} />
+                    <InfoRow
+                      label="Last Updated"
+                      value={fmtDate(details.updatedAt)}
+                    />
                   )}
                 </div>
               </div>
-
             </div>
           )}
         </div>
@@ -868,7 +986,9 @@ const OrderDetailsModal = ({ orderId, onClose }: OrderDetailsModalProps) => {
             >
               <div className="flex items-center gap-3 mb-4">
                 <AlertCircle className="w-5 h-5 text-red-500 shrink-0" />
-                <h3 className="text-base font-light tracking-wide">Cancel Order</h3>
+                <h3 className="text-base font-light tracking-wide">
+                  Cancel Order
+                </h3>
               </div>
               <p className="text-xs text-black/60 mb-2 font-light leading-relaxed">
                 Are you sure you want to cancel this order?
