@@ -98,12 +98,11 @@ const Products = () => {
   const [editingVariantIdx, setEditingVariantIdx] = useState(-1);
 
   // Queries
-  const { data: productsData, isLoading: isLoadingProducts } = useProducts(
-    currentPage,
-    itemsPerPage,
-    searchTerm,
-    statusFilter,
-  );
+  const {
+    data: productsData,
+    isLoading: isLoadingProducts,
+    isFetching: isFetchingProducts,
+  } = useProducts(currentPage, itemsPerPage, searchTerm, statusFilter);
   const { data: summary, isLoading: isLoadingSummary } = useProductSummary();
 
   // Mutations
@@ -302,6 +301,7 @@ const Products = () => {
             onEdit={handleEditProduct}
             onDelete={setProductToDelete}
             isLoading={isLoadingProducts}
+            isFetching={isFetchingProducts}
           />
         </div>
 

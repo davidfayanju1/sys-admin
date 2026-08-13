@@ -24,12 +24,11 @@ const Customers = () => {
   );
 
   // Queries
-  const { data: customersData, isLoading: isLoadingCustomers } = useCustomers(
-    currentPage,
-    itemsPerPage,
-    searchTerm,
-    statusFilter,
-  );
+  const {
+    data: customersData,
+    isLoading: isLoadingCustomers,
+    isFetching: isFetchingCustomers,
+  } = useCustomers(currentPage, itemsPerPage, searchTerm, statusFilter);
   const { data: summary, isLoading: isLoadingSummary } = useCustomerSummary();
   const { data: customerDetails, isLoading: isLoadingDetails } =
     useCustomerDetails(selectedCustomer?.id || null);
@@ -156,6 +155,7 @@ const Customers = () => {
             onPerRowsChange={handlePerRowsChange}
             onViewCustomer={handleViewCustomer}
             isLoading={isLoadingCustomers}
+            isFetching={isFetchingCustomers}
           />
         </div>
 

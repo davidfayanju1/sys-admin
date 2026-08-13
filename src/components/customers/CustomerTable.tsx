@@ -17,6 +17,7 @@ interface CustomerTableProps {
   onPerRowsChange: (rowsPerPage: number) => void;
   onViewCustomer: (customer: Customer) => void;
   isLoading?: boolean;
+  isFetching?: boolean;
 }
 
 // Skeleton row component
@@ -68,6 +69,7 @@ const CustomerTable = ({
   onPerRowsChange,
   onViewCustomer,
   isLoading,
+  isFetching,
 }: CustomerTableProps) => {
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat("en-NG", {
@@ -354,28 +356,35 @@ const CustomerTable = ({
   }
 
   return (
-    <DataTable
-      columns={columns}
-      data={customers}
-      customStyles={customStyles}
-      pagination
-      paginationServer
-      paginationTotalRows={totalRows}
-      onChangePage={onPageChange}
-      onChangeRowsPerPage={onPerRowsChange}
-      paginationPerPage={itemsPerPage}
-      paginationRowsPerPageOptions={[10, 20, 30, 50]}
-      highlightOnHover
-      responsive
-      persistTableHead
-      noDataComponent={
-        <div className="py-12 text-center">
-          <p className="text-xs text-black/40 tracking-wide">
-            No customers found matching your criteria.
-          </p>
+    <div className="relative">
+      {isFetching && (
+        <div className="absolute inset-0 z-10 bg-white overflow-hidden">
+          <SkeletonLoader />
         </div>
-      }
-    />
+      )}
+      <DataTable
+        columns={columns}
+        data={customers}
+        customStyles={customStyles}
+        pagination
+        paginationServer
+        paginationTotalRows={totalRows}
+        onChangePage={onPageChange}
+        onChangeRowsPerPage={onPerRowsChange}
+        paginationPerPage={itemsPerPage}
+        paginationRowsPerPageOptions={[10, 20, 30, 50]}
+        highlightOnHover
+        responsive
+        persistTableHead
+        noDataComponent={
+          <div className="py-12 text-center">
+            <p className="text-xs text-black/40 tracking-wide">
+              No customers found matching your criteria.
+            </p>
+          </div>
+        }
+      />
+    </div>
   );
 };
 

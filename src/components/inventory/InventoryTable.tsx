@@ -43,6 +43,7 @@ interface InventoryTableProps {
   onAdjustStock: (item: InventoryItem) => void;
   onDelete: (item: InventoryItem) => void;
   isLoading?: boolean;
+  isFetching?: boolean;
 }
 
 const customStyles = {
@@ -107,6 +108,7 @@ const InventoryTable = ({
   onAdjustStock,
   onDelete,
   isLoading,
+  isFetching,
 }: InventoryTableProps) => {
   const columns: TableColumn<InventoryItem>[] = [
     {
@@ -214,26 +216,33 @@ const InventoryTable = ({
   }
 
   return (
-    <DataTable
-      columns={columns}
-      data={inventory}
-      customStyles={customStyles}
-      pagination
-      paginationServer
-      paginationTotalRows={totalRows}
-      onChangePage={onPageChange}
-      onChangeRowsPerPage={onPerRowsChange}
-      paginationPerPage={itemsPerPage}
-      paginationRowsPerPageOptions={[10, 20, 30, 50]}
-      highlightOnHover
-      responsive
-      persistTableHead
-      noDataComponent={
-        <div className="py-12 text-center">
-          <p className="text-xs text-black/40 tracking-wide">No materials found.</p>
+    <div className="relative">
+      {isFetching && (
+        <div className="absolute inset-0 z-10 bg-white/70 flex items-center justify-center">
+          <div className="animate-spin rounded-full h-6 w-6 border-b border-black" />
         </div>
-      }
-    />
+      )}
+      <DataTable
+        columns={columns}
+        data={inventory}
+        customStyles={customStyles}
+        pagination
+        paginationServer
+        paginationTotalRows={totalRows}
+        onChangePage={onPageChange}
+        onChangeRowsPerPage={onPerRowsChange}
+        paginationPerPage={itemsPerPage}
+        paginationRowsPerPageOptions={[10, 20, 30, 50]}
+        highlightOnHover
+        responsive
+        persistTableHead
+        noDataComponent={
+          <div className="py-12 text-center">
+            <p className="text-xs text-black/40 tracking-wide">No materials found.</p>
+          </div>
+        }
+      />
+    </div>
   );
 };
 

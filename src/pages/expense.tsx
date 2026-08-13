@@ -193,7 +193,7 @@ const ExpensePage = () => {
     Partial<Record<keyof CreateExpensePayload, string>>
   >({});
 
-  const { data: expensesResponse, isLoading } = useExpenses(
+  const { data: expensesResponse, isLoading, isFetching } = useExpenses(
     currentPage,
     rowsPerPage,
     searchTerm,
@@ -569,36 +569,43 @@ const ExpensePage = () => {
         </div>
 
         {/* Table */}
-        <div className="bg-white border border-black/10">
+        <div className="bg-white border border-black/10 relative">
           {isLoading ? (
             <TableSkeleton />
           ) : (
-            <DataTable
-              columns={columns}
-              data={expenses}
-              customStyles={customStyles}
-              pagination
-              paginationServer
-              paginationTotalRows={meta.total}
-              onChangePage={(page: number) => setCurrentPage(page)}
-              onChangeRowsPerPage={(n: number, p: number) => {
-                setRowsPerPage(n);
-                setCurrentPage(p);
-              }}
-              paginationPerPage={rowsPerPage}
-              paginationRowsPerPageOptions={[10, 20, 50]}
-              highlightOnHover
-              responsive
-              persistTableHead
-              noDataComponent={
-                <div className="py-12 text-center">
-                  <Receipt className="w-8 h-8 text-black/15 mx-auto mb-3" />
-                  <p className="text-xs text-black/40 tracking-wide">
-                    No expenses recorded yet.
-                  </p>
+            <>
+              {isFetching && (
+                <div className="absolute inset-0 z-10 bg-white">
+                  <TableSkeleton />
                 </div>
-              }
-            />
+              )}
+              <DataTable
+                columns={columns}
+                data={expenses}
+                customStyles={customStyles}
+                pagination
+                paginationServer
+                paginationTotalRows={meta.total}
+                onChangePage={(page: number) => setCurrentPage(page)}
+                onChangeRowsPerPage={(n: number, p: number) => {
+                  setRowsPerPage(n);
+                  setCurrentPage(p);
+                }}
+                paginationPerPage={rowsPerPage}
+                paginationRowsPerPageOptions={[10, 20, 50]}
+                highlightOnHover
+                responsive
+                persistTableHead
+                noDataComponent={
+                  <div className="py-12 text-center">
+                    <Receipt className="w-8 h-8 text-black/15 mx-auto mb-3" />
+                    <p className="text-xs text-black/40 tracking-wide">
+                      No expenses recorded yet.
+                    </p>
+                  </div>
+                }
+              />
+            </>
           )}
         </div>
       </div>

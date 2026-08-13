@@ -40,7 +40,11 @@ const Inventory = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
 
-  const { data: inventoryData, isLoading: isLoadingInventory } = useInventory(
+  const {
+    data: inventoryData,
+    isLoading: isLoadingInventory,
+    isFetching: isFetchingInventory,
+  } = useInventory(
     currentPage,
     itemsPerPage,
     searchTerm,
@@ -313,6 +317,7 @@ const Inventory = () => {
             onAdjustStock={handleAdjustStock}
             onDelete={handleDeleteClick}
             isLoading={isLoadingInventory}
+            isFetching={isFetchingInventory}
           />
         </div>
       </div>

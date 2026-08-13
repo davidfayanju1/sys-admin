@@ -140,7 +140,7 @@ const Services = () => {
 
   const [form, setForm] = useState<ServicePayload>(blankForm());
 
-  const { data: res, isLoading, error } = useServices(currentPage, rowsPerPage, searchTerm);
+  const { data: res, isLoading, isFetching, error } = useServices(currentPage, rowsPerPage, searchTerm);
   const services = res?.data ?? [];
   const meta = res?.meta ?? { total: 0 };
 
@@ -385,7 +385,7 @@ const Services = () => {
         </div>
 
         {/* Table */}
-        <div className="bg-white border border-black/10">
+        <div className="bg-white border border-black/10 relative">
           {isLoading ? (
             <TableSkeleton />
           ) : error ? (
@@ -394,37 +394,44 @@ const Services = () => {
               <p className="text-xs text-black/40">Failed to load services.</p>
             </div>
           ) : (
-            <DataTable
-              columns={columns}
-              data={services}
-              customStyles={customStyles}
-              pagination
-              paginationServer
-              paginationTotalRows={meta.total}
-              onChangePage={(page: number) => setCurrentPage(page)}
-              onChangeRowsPerPage={(n: number, p: number) => {
-                setRowsPerPage(n);
-                setCurrentPage(p);
-              }}
-              paginationPerPage={rowsPerPage}
-              paginationRowsPerPageOptions={[10, 20, 50]}
-              highlightOnHover
-              responsive
-              persistTableHead
-              noDataComponent={
-                <div className="py-16 text-center">
-                  <Layers className="w-8 h-8 text-black/15 mx-auto mb-3" />
-                  <p className="text-xs text-black/40 tracking-wide">No services found.</p>
-                  <button
-                    onClick={openCreate}
-                    className="mt-4 flex items-center gap-1.5 text-xs text-black/60 hover:text-black transition mx-auto"
-                  >
-                    <Plus className="w-3.5 h-3.5" />
-                    Create your first service
-                  </button>
+            <>
+              {isFetching && (
+                <div className="absolute inset-0 z-10 bg-white">
+                  <TableSkeleton />
                 </div>
-              }
-            />
+              )}
+              <DataTable
+                columns={columns}
+                data={services}
+                customStyles={customStyles}
+                pagination
+                paginationServer
+                paginationTotalRows={meta.total}
+                onChangePage={(page: number) => setCurrentPage(page)}
+                onChangeRowsPerPage={(n: number, p: number) => {
+                  setRowsPerPage(n);
+                  setCurrentPage(p);
+                }}
+                paginationPerPage={rowsPerPage}
+                paginationRowsPerPageOptions={[10, 20, 50]}
+                highlightOnHover
+                responsive
+                persistTableHead
+                noDataComponent={
+                  <div className="py-16 text-center">
+                    <Layers className="w-8 h-8 text-black/15 mx-auto mb-3" />
+                    <p className="text-xs text-black/40 tracking-wide">No services found.</p>
+                    <button
+                      onClick={openCreate}
+                      className="mt-4 flex items-center gap-1.5 text-xs text-black/60 hover:text-black transition mx-auto"
+                    >
+                      <Plus className="w-3.5 h-3.5" />
+                      Create your first service
+                    </button>
+                  </div>
+                }
+              />
+            </>
           )}
         </div>
       </div>

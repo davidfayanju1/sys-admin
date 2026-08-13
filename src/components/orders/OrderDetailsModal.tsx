@@ -11,6 +11,7 @@ import {
   CheckCircle,
   Clock,
   XCircle,
+  Trash2,
   MapPin,
   CreditCard,
   User,
@@ -24,6 +25,7 @@ import {
   useOrderDetails,
   useUpdateOrderStatus,
   useUpdateOrderPayment,
+  useDeleteOrder,
   type OrderDetail,
   type OrderAddress,
 } from "../../hooks/useOrders";
@@ -354,7 +356,9 @@ const OrderDetailsModal = ({ orderId, onClose }: OrderDetailsModalProps) => {
   const { data: orderDetailsData, isLoading, error } = useOrderDetails(orderId);
   const updateStatusMutation = useUpdateOrderStatus();
   const updatePaymentMutation = useUpdateOrderPayment();
+  const deleteOrderMutation = useDeleteOrder();
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [copiedId, setCopiedId] = useState(false);
 
   const details: OrderDetail | null =
@@ -401,6 +405,17 @@ const OrderDetailsModal = ({ orderId, onClose }: OrderDetailsModalProps) => {
       setShowCancelConfirm(false);
     } catch {
       toast.error("Failed to cancel order");
+    }
+  };
+
+  const handleDeleteOrder = async () => {
+    try {
+      await deleteOrderMutation.mutateAsync(orderId);
+      toast.success("Order deleted");
+      setShowDeleteConfirm(false);
+      onClose();
+    } catch {
+      toast.error("Failed to delete order");
     }
   };
 
@@ -471,6 +486,14 @@ const OrderDetailsModal = ({ orderId, onClose }: OrderDetailsModalProps) => {
               className="p-2 cursor-pointer underline-offset-2 text-[.7rem] underline text-red-500 transition-colors text-black/40 rounded disabled:opacity-40"
             >
               Cancel Order
+            </button>
+            <button
+              onClick={() => setShowDeleteConfirm(true)}
+              disabled={deleteOrderMutation.isPending || isLoading}
+              title="Delete order permanently"
+              className="p-2 hover:bg-red-50 hover:text-red-600 transition-colors text-black/40 rounded disabled:opacity-40"
+            >
+              <Trash2 className="w-4 h-4" />
             </button>
             <button
               onClick={onClose}
@@ -1019,6 +1042,65 @@ const OrderDetailsModal = ({ orderId, onClose }: OrderDetailsModalProps) => {
                     </>
                   ) : (
                     "Cancel Order"
+                  )}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ── Delete Confirm ──────────────────────────────────────────────── */}
+      <AnimatePresence>
+        {showDeleteConfirm && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-60 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white border border-black/10 w-full max-w-sm p-6 shadow-2xl"
+            >
+              <div className="flex items-center gap-3 mb-4">
+                <AlertCircle className="w-5 h-5 text-red-500 shrink-0" />
+                <h3 className="text-base font-light tracking-wide">
+                  Delete Order
+                </h3>
+              </div>
+              <p className="text-xs text-black/60 mb-2 font-light leading-relaxed">
+                Are you sure you want to permanently delete this order?
+              </p>
+              <p className="text-[10px] font-mono text-black/40 bg-black/5 px-3 py-2 mb-6 break-all">
+                {details?.id || orderId}
+              </p>
+              <p className="text-[10px] text-red-500 mb-5">
+                This removes the order entirely and cannot be undone. Use Cancel
+                Order instead if you just need to mark it as not fulfilled.
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowDeleteConfirm(false)}
+                  disabled={deleteOrderMutation.isPending}
+                  className="flex-1 py-2.5 text-[11px] uppercase tracking-wider border border-black/10 hover:bg-black/5 transition-colors disabled:opacity-50"
+                >
+                  Back
+                </button>
+                <button
+                  onClick={handleDeleteOrder}
+                  disabled={deleteOrderMutation.isPending}
+                  className="flex-1 py-2.5 text-[11px] uppercase tracking-wider bg-red-600 text-white hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                >
+                  {deleteOrderMutation.isPending ? (
+                    <>
+                      <RefreshCw className="w-3 h-3 animate-spin" />
+                      Deleting…
+                    </>
+                  ) : (
+                    "Delete Order"
                   )}
                 </button>
               </div>

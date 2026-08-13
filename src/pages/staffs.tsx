@@ -200,7 +200,7 @@ const Staffs = () => {
   const [addForm, setAddForm] = useState(emptyAdd);
   const [editForm, setEditForm] = useState(emptyEdit);
 
-  const { data: staffData, isLoading } = useStaff(
+  const { data: staffData, isLoading, isFetching } = useStaff(
     currentPage,
     rowsPerPage,
     searchTerm || undefined,
@@ -543,35 +543,42 @@ const Staffs = () => {
         </div>
 
         {/* Table */}
-        <div className="bg-white border border-black/10">
+        <div className="bg-white border border-black/10 relative">
           {isLoading ? (
             <TableSkeleton />
           ) : (
-            <DataTable
-              columns={columns}
-              data={users}
-              customStyles={customStyles}
-              pagination
-              paginationServer
-              paginationTotalRows={totalRows}
-              paginationPerPage={rowsPerPage}
-              paginationRowsPerPageOptions={[10, 20, 50]}
-              onChangePage={(page: number) => setCurrentPage(page)}
-              onChangeRowsPerPage={(newPerPage: number, page: number) => {
-                setRowsPerPage(newPerPage);
-                setCurrentPage(page);
-              }}
-              highlightOnHover
-              responsive
-              persistTableHead
-              noDataComponent={
-                <div className="py-12 text-center">
-                  <p className="text-xs text-black/40 tracking-wide">
-                    No staff members found
-                  </p>
+            <>
+              {isFetching && (
+                <div className="absolute inset-0 z-10 bg-white">
+                  <TableSkeleton />
                 </div>
-              }
-            />
+              )}
+              <DataTable
+                columns={columns}
+                data={users}
+                customStyles={customStyles}
+                pagination
+                paginationServer
+                paginationTotalRows={totalRows}
+                paginationPerPage={rowsPerPage}
+                paginationRowsPerPageOptions={[10, 20, 50]}
+                onChangePage={(page: number) => setCurrentPage(page)}
+                onChangeRowsPerPage={(newPerPage: number, page: number) => {
+                  setRowsPerPage(newPerPage);
+                  setCurrentPage(page);
+                }}
+                highlightOnHover
+                responsive
+                persistTableHead
+                noDataComponent={
+                  <div className="py-12 text-center">
+                    <p className="text-xs text-black/40 tracking-wide">
+                      No staff members found
+                    </p>
+                  </div>
+                }
+              />
+            </>
           )}
         </div>
       </div>

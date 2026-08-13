@@ -21,6 +21,7 @@ interface ProductTableProps {
   onEdit: (product: Product) => void;
   onDelete: (product: Product) => void;
   isLoading?: boolean;
+  isFetching?: boolean;
 }
 
 const ProductTable = ({
@@ -34,6 +35,7 @@ const ProductTable = ({
   onEdit,
   onDelete,
   isLoading,
+  isFetching,
 }: ProductTableProps) => {
   const getStatusBadge = (status: Product["status"]) => {
     const displayStatus = status === "published" ? "active" : status;
@@ -312,28 +314,35 @@ const ProductTable = ({
   }
 
   return (
-    <DataTable
-      columns={columns}
-      data={products}
-      customStyles={customStyles}
-      pagination
-      paginationServer
-      paginationTotalRows={totalRows}
-      onChangePage={onPageChange}
-      onChangeRowsPerPage={onPerRowsChange}
-      paginationPerPage={itemsPerPage}
-      paginationRowsPerPageOptions={[10, 20, 30, 50]}
-      highlightOnHover
-      responsive
-      persistTableHead
-      noDataComponent={
-        <div className="py-12 text-center">
-          <p className="text-xs text-black/40 tracking-wide">
-            No products found matching your criteria.
-          </p>
+    <div className="relative">
+      {isFetching && (
+        <div className="absolute inset-0 z-10 bg-white/70 flex items-center justify-center">
+          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-black" />
         </div>
-      }
-    />
+      )}
+      <DataTable
+        columns={columns}
+        data={products}
+        customStyles={customStyles}
+        pagination
+        paginationServer
+        paginationTotalRows={totalRows}
+        onChangePage={onPageChange}
+        onChangeRowsPerPage={onPerRowsChange}
+        paginationPerPage={itemsPerPage}
+        paginationRowsPerPageOptions={[10, 20, 30, 50]}
+        highlightOnHover
+        responsive
+        persistTableHead
+        noDataComponent={
+          <div className="py-12 text-center">
+            <p className="text-xs text-black/40 tracking-wide">
+              No products found matching your criteria.
+            </p>
+          </div>
+        }
+      />
+    </div>
   );
 };
 

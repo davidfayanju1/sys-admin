@@ -109,7 +109,7 @@ const Messages = () => {
   const [rowsPerPage, setRowsPerPage] = useState(20);
   const [selected, setSelected] = useState<Message | null>(null);
 
-  const { data: messagesResponse, isLoading } = useMessages(
+  const { data: messagesResponse, isLoading, isFetching } = useMessages(
     currentPage,
     rowsPerPage,
     searchTerm,
@@ -331,36 +331,43 @@ const Messages = () => {
         </div>
 
         {/* Table */}
-        <div className="bg-white border border-black/10">
+        <div className="bg-white border border-black/10 relative">
           {isLoading ? (
             <TableSkeleton />
           ) : (
-            <DataTable
-              columns={columns}
-              data={items}
-              customStyles={customStyles}
-              pagination
-              paginationServer
-              paginationTotalRows={meta.total}
-              onChangePage={(page: number) => setCurrentPage(page)}
-              onChangeRowsPerPage={(n: number, p: number) => {
-                setRowsPerPage(n);
-                setCurrentPage(p);
-              }}
-              paginationPerPage={rowsPerPage}
-              paginationRowsPerPageOptions={[10, 20, 50]}
-              highlightOnHover
-              responsive
-              persistTableHead
-              noDataComponent={
-                <div className="py-12 text-center">
-                  <Inbox className="w-8 h-8 text-black/15 mx-auto mb-3" />
-                  <p className="text-xs text-black/40 tracking-wide">
-                    No messages yet.
-                  </p>
+            <>
+              {isFetching && (
+                <div className="absolute inset-0 z-10 bg-white">
+                  <TableSkeleton />
                 </div>
-              }
-            />
+              )}
+              <DataTable
+                columns={columns}
+                data={items}
+                customStyles={customStyles}
+                pagination
+                paginationServer
+                paginationTotalRows={meta.total}
+                onChangePage={(page: number) => setCurrentPage(page)}
+                onChangeRowsPerPage={(n: number, p: number) => {
+                  setRowsPerPage(n);
+                  setCurrentPage(p);
+                }}
+                paginationPerPage={rowsPerPage}
+                paginationRowsPerPageOptions={[10, 20, 50]}
+                highlightOnHover
+                responsive
+                persistTableHead
+                noDataComponent={
+                  <div className="py-12 text-center">
+                    <Inbox className="w-8 h-8 text-black/15 mx-auto mb-3" />
+                    <p className="text-xs text-black/40 tracking-wide">
+                      No messages yet.
+                    </p>
+                  </div>
+                }
+              />
+            </>
           )}
         </div>
       </div>
